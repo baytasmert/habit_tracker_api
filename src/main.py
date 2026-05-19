@@ -1,4 +1,8 @@
-from fastapi import FastAPI, Depends, HTTPException, Form, File, UploadFile
+import logging
+import uuid
+from fastapi import FastAPI, Depends, HTTPException, Form, File, UploadFile, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 from datetime import date, timedelta
 from typing import List, Optional
@@ -10,11 +14,31 @@ from .schemas import (
     TrackResponse, StreakResponse
 )
 
+logger = logging.getLogger(__name__)
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title="Habit Tracker API",
     description="Günlük alışkanlık tracking API'si",
     version="0.1.0"
 )
+app.state.limiter = limiter
+
+
+@app.middleware("http")
+async def add_trace_id(request: Request, call_next):
+    trace_id = str(uuid.uuid4())
+    request.state.trace_id = trace_id
+    logger.info(f"[{trace_id}] {request.method} {request.url.path}")
+    response = await call_next(request)
+    response.headers["X-Trace-ID"] = trace_id
+    logger.info(f"[{trace_id}] Status: {response.status_code}")
+    return response
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 
 @app.on_event("startup")
@@ -37,8 +61,11 @@ def compute_streak(history: dict) -> tuple[int, Optional[date]]:
 
 
 @app.get("/habits", response_model=List[HabitResponse])
+@limiter.limit("100/minute")
 def list_habits(db: Session = Depends(get_db)):
+    logger.info("Fetching all habits")
     habits = db.query(Habit).all()
+    logger.info(f"Retrieved {len(habits)} habits")
     return habits
 
 
@@ -120,9 +147,10 @@ def delete_habit(habit_id: int, db: Session = Depends(get_db)):
     habit = db.query(Habit).filter(Habit.id == habit_id).first()
     if not habit:
         raise HTTPException(status_code=404, detail="Habit not found")
-    
+
     db.delete(habit)
     db.commit()
+
 
 @app.patch("/habits/{habit_id}", response_model=HabitResponse)
 def update_habit(
@@ -133,7 +161,7 @@ def update_habit(
     habit = db.query(Habit).filter(Habit.id == habit_id).first()
     if not habit:
         raise HTTPException(status_code=404, detail="Habit not found")
-    
+
     if "name" in payload:
         habit.name = payload["name"]
     if "description" in payload:
@@ -142,14 +170,18 @@ def update_habit(
         habit.goal_days_per_week = payload["goal_days_per_week"]
     if "category" in payload:
         habit.category = payload["category"]
-    
+
     db.commit()
     db.refresh(habit)
     return habit
 
+
 @app.post("/users", status_code=201)
-def create_user(username: str = Form(...), email: str = Form(...), db: Session = Depends(get_db)):
-    """Yeni kullanıcı oluştur"""
+def create_user(
+    username: str = Form(...),
+    email: str = Form(...),
+    db: Session = Depends(get_db)
+):
     existing = db.query(User).filter(User.username == username).first()
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
@@ -159,53 +191,54 @@ def create_user(username: str = Form(...), email: str = Form(...), db: Session =
     db.commit()
     db.refresh(new_user)
 
-    return {"id": new_user.id, "username": new_user.username, "email": new_user.email}
+    return {
+        "id": new_user.id,
+        "username": new_user.username,
+        "email": new_user.email
+    }
+
 
 @app.post("/users/{user_id}/avatar")
-async def upload_avatar(user_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
-    """Kullanıcı avatar'ı yükle"""
-    # Kullanıcıyı kontrol et
+async def upload_avatar(
+    user_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    # Dosyayı oku
+
     file_content = await file.read()
-    
-    # S3'e yükle
+
     s3 = S3Service()
     file_key = f"avatars/user-{user_id}.jpg"
     url = s3.upload_file(file_key, file_content)
-    
+
     if not url:
         raise HTTPException(status_code=500, detail="Upload failed")
-    
-    # Database'e kaydet
+
     user.avatar_url = url
     db.commit()
     db.refresh(user)
-    
+
     return {"avatar_url": url, "user_id": user_id}
 
 
 @app.get("/users/{user_id}/avatar")
 def download_avatar(user_id: int, db: Session = Depends(get_db)):
-    """Kullanıcı avatar'ını indir"""
-    # Kullanıcıyı kontrol et
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     if not user.avatar_url:
         raise HTTPException(status_code=404, detail="Avatar not found")
-    
-    # S3'ten indir
+
     s3 = S3Service()
     file_key = f"avatars/user-{user_id}.jpg"
     file_data = s3.download_file(file_key)
-    
+
     if not file_data:
         raise HTTPException(status_code=500, detail="Download failed")
-    
+
     from fastapi.responses import StreamingResponse
     return StreamingResponse(iter([file_data]), media_type="image/jpeg")

@@ -11,7 +11,7 @@ class HabitCreate(BaseModel):
 
 class HabitResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: int
     name: str
     description: Optional[str]
@@ -31,7 +31,7 @@ class TrackRequest(BaseModel):
 
 class TrackResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
+
     habit_id: int
     date: date
     done: bool
@@ -39,7 +39,7 @@ class TrackResponse(BaseModel):
 
 class StreakResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
+
     habit_id: int
     streak_days: int
     last_tracked: Optional[date]

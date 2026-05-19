@@ -1,6 +1,6 @@
-import os                                    # STEP 1: İşletim sistemi
-from sqlalchemy import create_engine         # STEP 2: Motor oluştur
-from sqlalchemy.orm import sessionmaker, declarative_base  # STEP 2: Fabrika + Şablon
+import os
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
@@ -9,15 +9,16 @@ DATABASE_URL = os.getenv(
 
 engine = create_engine(DATABASE_URL)
 
-SessionLocal = sessionmaker(                 # STEP 5: Bağlantı fabrikası
+SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine
 )
 
-Base = declarative_base()                    # STEP 6: Tablo şablonu
+Base = declarative_base()
 
-def get_db():                                # STEP 7: Bağlantı yöneticisi
+
+def get_db():
     db = SessionLocal()
     try:
         yield db
