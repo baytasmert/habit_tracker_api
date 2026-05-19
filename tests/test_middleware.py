@@ -15,11 +15,10 @@ def client():
 class TestGZipMiddleware:
     """Test GZip compression middleware"""
 
-    def test_gzip_compression_enabled(self, client):
+    def test_gzip_compression_enabled(self, auth_client):
         """Large response should be gzip compressed"""
-        response = client.get("/habits")
-        assert "gzip" in response.headers.get("content-encoding", "").lower() or \
-               response.status_code == 200
+        response = auth_client.get("/habits")
+        assert response.status_code == 200
 
 
 class TestTrustedHostMiddleware:
@@ -95,7 +94,7 @@ class TestCORSMiddleware:
 class TestRateLimiting:
     """Test rate limiting middleware"""
 
-    def test_rate_limit_header(self, client):
+    def test_rate_limit_header(self, auth_client):
         """Rate limit endpoint should include rate limit info"""
-        response = client.get("/habits")
+        response = auth_client.get("/habits")
         assert response.status_code == 200

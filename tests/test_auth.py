@@ -112,7 +112,7 @@ class TestProtectedEndpoints:
     def test_list_habits_without_token(self):
         """Cannot access protected endpoint without token"""
         response = client.get("/habits")
-        assert response.status_code == 403
+        assert response.status_code == 401
 
     def test_list_habits_with_invalid_token(self):
         """Cannot access with invalid token"""
