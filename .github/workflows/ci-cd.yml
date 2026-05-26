@@ -62,7 +62,7 @@ jobs:
         run: pip install -r requirements.txt
       
       - name: Run tests with coverage
-        run: pytest tests/ -v
+        run: pytest tests/ -v --cov=src --cov-fail-under=70 --cov-report=xml
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/habits
           DB_HOST: localhost
@@ -119,6 +119,15 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+      localstack:
+        image: localstack/localstack:latest
+        env:
+          SERVICES: s3
+          DEBUG: 1
+          DATA_DIR: /tmp/localstack
+          DOCKER_HOST: unix:///var/run/docker.sock
+        ports:
+          - 4566:4566
     steps:
       - uses: actions/checkout@v4
 
@@ -137,6 +146,10 @@ jobs:
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
 
+      - name: Pull Docker image from registry
+        run: |
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
       - name: Load Docker image into Kind
         run: |
           kind load docker-image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} --name=habit-tracker
@@ -147,6 +160,10 @@ jobs:
           kubectl apply -f k8s/service.yaml
           kubectl apply -f k8s/configmap.yaml
           kubectl rollout status deployment/habit-tracker-api -n default --timeout=5m
+
+      - name: Wait for pod readiness
+        run: |
+          kubectl wait --for=condition=ready pod -l app=habit-tracker-api -n default --timeout=5m
 
       - name: Port forward
         run: |
@@ -180,3 +197,9 @@ jobs:
         with:
           name: newman-results
           path: postman-results.json
+
+      - name: Debug - Show pod logs on failure
+        if: failure()
+        run: |
+          kubectl logs -l app=habit-tracker-api -n default --all-containers=true || true
+          kubectl describe pods -n default || true
