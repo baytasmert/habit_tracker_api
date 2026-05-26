@@ -41,3 +41,16 @@ spec:
           value: "postgresql://user:password@postgres-service:5432/habits"
         - name: AWS_ENDPOINT_URL
           value: "http://localstack-service:4566"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 3
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 20
+          periodSeconds: 10
