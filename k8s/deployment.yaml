@@ -1,10 +1,17 @@
+# ═══════════════════════════════════════════════════════════════════
+# Kubernetes Deployment — Pod'ları Başlat
+# ═══════════════════════════════════════════════════════════════════
+# Bu manifest Kind cluster'da 3 adet Pod başlatır
+# Her Pod: FastAPI app (8000 portunda)
+# Kapanış: kubectl delete deployment habit-tracker-api
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: habit-tracker-api
   namespace: default
 spec:
-  replicas: 3
+  replicas: 3  # 🟢 3 Pod başlat (load balancing için)
   selector:
     matchLabels:
       app: habit-tracker-api

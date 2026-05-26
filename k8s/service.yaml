@@ -1,13 +1,20 @@
+# ═══════════════════════════════════════════════════════════════════
+# Kubernetes Service — Pod'ları Expose Et
+# ═══════════════════════════════════════════════════════════════════
+# Service: 3 Pod'ı ClusterIP olarak expose ediyor
+# Port: 8001 (dış) → 8000 (Pod'ların container portu)
+# Kapanış: kubectl delete svc habit-tracker-api-service
+
 apiVersion: v1
 kind: Service
 metadata:
   name: habit-tracker-api-service
   namespace: default
 spec:
-  type: LoadBalancer
+  type: LoadBalancer  # 📤 Pod'ları dış dünyaya expose et
   selector:
-    app: habit-tracker-api
+    app: habit-tracker-api  # Hangi Pod'ları expose edecek (label match)
   ports:
   - protocol: TCP
-    port: 8001
-    targetPort: 8000
+    port: 8001  # 🔌 Dışarıdan erişilen port
+    targetPort: 8000  # 🎯 Pod'ların container portu

@@ -1,9 +1,16 @@
+# ═══════════════════════════════════════════════════════════════════
+# Kubernetes ConfigMap — Environment Variables
+# ═══════════════════════════════════════════════════════════════════
+# Pod'lara ortam değişkenleri geçir (DATABASE_URL, AWS_ENDPOINT_URL vb.)
+# Kapanış: kubectl delete configmap habit-tracker-config
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: habit-tracker-config
   namespace: default
 data:
+  # 🗄️ Database Konfigürasyonu
   DATABASE_URL: "postgresql://user:password@host.docker.internal:5432/habits"
   DB_HOST: "host.docker.internal"
   AWS_ENDPOINT_URL: "http://host.docker.internal:4566"
