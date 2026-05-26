@@ -62,9 +62,9 @@ jobs:
 
       # 📦 LocalStack Container Başlatılıyor (4566)
       # AWS S3 emülasyonu için (avatar upload/download test)
-      # Version 2.0.2: License hatası olmadan çalışır
+      # Digest hash kullanılıyor: 2.0.2 version'ını kesin belirt
       localstack:
-        image: localstack/localstack:2.0.2
+        image: localstack/localstack@sha256:2b4ec60261238bfc9573193380724ed4b9ee9fa0f39726275cd8feb48a254219
         env:
           SERVICES: s3
           DEBUG: 1
@@ -99,7 +99,7 @@ jobs:
           flags: unittests
           name: codecov-umbrella
 
-  # 📝 TEST JOB SONU: PostgreSQL ve LocalStack containerları otomatik silinir
+  # 📝 TEST JOB SONU: PostgreSQL ve LocalStack containerları otomatik silinir (digest hash ile version fixed)
 
   # ─────────────────────────────────────────────────────────────────
   # JOB 3: BUILD (Docker image inşa ve registry'ye push)
@@ -156,9 +156,9 @@ jobs:
 
       # 📦 LocalStack Container (4566)
       # K8s pods içindeki app S3'e bu endpoint'ten erişiyor
-      # Version 2.0.2: License hatası olmadan çalışır
+      # Digest hash kullanılıyor: 2.0.2 version'ını kesin belirt
       localstack:
-        image: localstack/localstack:2.0.2
+        image: localstack/localstack@sha256:2b4ec60261238bfc9573193380724ed4b9ee9fa0f39726275cd8feb48a254219
         env:
           SERVICES: s3
           DEBUG: 1
