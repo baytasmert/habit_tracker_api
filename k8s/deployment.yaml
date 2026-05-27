@@ -31,16 +31,14 @@ spec:
     spec:
       containers:
       - name: habit-tracker
-        image: ghcr.io/kulo/habit-tracker-api-1:latest
-        imagePullPolicy: IfNotPresent
+        image: ghcr.io/baytasmert/habit-tracker-api:latest
+        imagePullPolicy: Always
         command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
         ports:
         - containerPort: 8000
-        env:
-        - name: DATABASE_URL
-          value: "postgresql://user:password@postgres-service:5432/habits"
-        - name: AWS_ENDPOINT_URL
-          value: "http://localstack-service:4566"
+        envFrom:
+        - configMapRef:
+            name: habit-tracker-config
         readinessProbe:
           httpGet:
             path: /health

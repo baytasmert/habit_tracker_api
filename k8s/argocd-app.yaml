@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: habit-tracker
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/baytasmert/habit-tracker-api
+    targetRevision: main
+    path: k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true      # repo'dan silinen manifest k8s'den de silinsin
+      selfHeal: true   # manuel kubectl apply yapılırsa repo'ya geri dönsün
+    syncOptions:
+      - CreateNamespace=true

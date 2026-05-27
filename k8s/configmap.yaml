@@ -11,8 +11,8 @@ metadata:
   namespace: default
 data:
   # 🗄️ Database Konfigürasyonu
-  DATABASE_URL: "postgresql://user:password@host.docker.internal:5432/habits"
-  DB_HOST: "host.docker.internal"
+  DATABASE_URL: "postgresql://user:password@postgres-service:5432/habits"
+  DB_HOST: "postgres-service"
   AWS_ENDPOINT_URL: "http://host.docker.internal:4566"
   AWS_REGION: "us-east-1"
   AWS_ACCESS_KEY_ID: "test"
