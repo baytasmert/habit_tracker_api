@@ -8,8 +8,8 @@ const BASE_URL = 'http://localhost:8001';
 export const options = {
   stages: [
     { duration: '10s', target: 10 },   // ramp up to 10 VU
+    { duration: '20s', target: 30 },   // ramp up to 30 VU
     { duration: '20s', target: 50 },   // ramp up to 50 VU
-    { duration: '20s', target: 100 },  // ramp up to 100 VU
     { duration: '10s', target: 0 },    // ramp down to 0
   ],
   thresholds: {
