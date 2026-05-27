@@ -1,6 +1,6 @@
-def test_create_habit(client):
+def test_create_habit(auth_client):
     # API'ye POST gönder
-    response = client.post("/habits", json={
+    response = auth_client.post("/habits", json={
         "name": "Koşu",
         "description": "Günlük koşu"
     })
@@ -14,16 +14,16 @@ def test_create_habit(client):
     assert data["id"] is not None
 
 
-def test_track_habit(client):
+def test_track_habit(auth_client):
     # 1. Önce habit oluştur
-    create_response = client.post("/habits", json={
+    create_response = auth_client.post("/habits", json={
         "name": "Meditasyon",
         "description": "Günlük meditasyon"
     })
     habit_id = create_response.json()["id"]
 
     # 2. Tracking ekle
-    track_response = client.post(f"/habits/{habit_id}/track", json={
+    track_response = auth_client.post(f"/habits/{habit_id}/track", json={
         "done": True,
         "duration": 10,
         "notes": "Rahat bir seans"
@@ -37,20 +37,20 @@ def test_track_habit(client):
     assert track_data["done"] == True
 
 
-def test_get_streak(client):
+def test_get_streak(auth_client):
     # 1. Habit oluştur
-    create_response = client.post("/habits", json={
+    create_response = auth_client.post("/habits", json={
         "name": "Kitap okuma",
         "description": "Her gün 30 dakika"
     })
     habit_id = create_response.json()["id"]
 
     # 2. 2 gün tracking ekle
-    client.post(f"/habits/{habit_id}/track", json={"done": True})
-    client.post(f"/habits/{habit_id}/track", json={"done": True})
+    auth_client.post(f"/habits/{habit_id}/track", json={"done": True})
+    auth_client.post(f"/habits/{habit_id}/track", json={"done": True})
 
     # 3. Streak al
-    streak_response = client.get(f"/habits/{habit_id}/streak")
+    streak_response = auth_client.get(f"/habits/{habit_id}/streak")
 
     # Check 1: status code 200 mi?
     assert streak_response.status_code == 200

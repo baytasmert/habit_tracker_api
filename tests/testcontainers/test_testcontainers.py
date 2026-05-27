@@ -11,7 +11,7 @@ os.environ["TESTCONTAINERS_RYUK_DISABLED"] = "true"
 
 from src.database import Base
 from src.models import Habit, HabitLog
-from tests.factories import HabitFactory, HabitLogFactory
+from tests.factories import UserFactory, HabitFactory, HabitLogFactory
 
 
 @pytest.fixture(scope="module")
@@ -42,6 +42,7 @@ def isolated_db_session(isolated_postgres_db):
     session = SessionLocal(bind=connection)
 
     # Set factory session
+    UserFactory._meta.sqlalchemy_session = session
     HabitFactory._meta.sqlalchemy_session = session
     HabitLogFactory._meta.sqlalchemy_session = session
 

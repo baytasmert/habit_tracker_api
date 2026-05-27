@@ -33,9 +33,9 @@ class TestTrustedHostMiddleware:
 class TestValidationErrorHandler:
     """Test validation error handling"""
 
-    def test_invalid_habit_creation(self, client):
+    def test_invalid_habit_creation(self, auth_client):
         """Invalid payload should return 422 with trace_id"""
-        response = client.post(
+        response = auth_client.post(
             "/habits",
             json={"description": "Missing name field"}
         )
@@ -44,9 +44,9 @@ class TestValidationErrorHandler:
         assert "detail" in data
         assert "trace_id" in data
 
-    def test_validation_error_format(self, client):
+    def test_validation_error_format(self, auth_client):
         """Validation error should include errors list"""
-        response = client.post(
+        response = auth_client.post(
             "/habits",
             json={"invalid_field": "value"}
         )
