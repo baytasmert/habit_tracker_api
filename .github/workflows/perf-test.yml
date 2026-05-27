@@ -9,11 +9,55 @@ jobs:
   smoke-test:
     runs-on: ubuntu-latest
     name: k6 Smoke Test
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: habits
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup k6
         uses: grafana/setup-k6-action@v1
+
+      - name: Build Docker image
+        run: docker build -t habit-tracker-api:latest .
+
+      - name: Run API container
+        run: |
+          docker run -d \
+            --name api \
+            --network host \
+            -e DATABASE_URL=postgresql://user:password@localhost:5432/habits \
+            -e DB_HOST=localhost \
+            -e DB_PORT=5432 \
+            -e DB_USER=user \
+            -e DB_PASSWORD=password \
+            -e DB_NAME=habits \
+            habit-tracker-api:latest
+
+      - name: Wait for API to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:8001/health 2>/dev/null; then
+              echo "API is ready!"
+              exit 0
+            fi
+            echo "Waiting for API... ($i/30)"
+            sleep 1
+          done
+          echo "API failed to start!"
+          docker logs api
+          exit 1
 
       - name: Run smoke test (5 VU, 30s)
         run: k6 run perf/smoke-test.js
@@ -24,11 +68,55 @@ jobs:
     name: k6 Load Test
     needs: smoke-test
     if: github.event_name == 'pull_request' || github.event_name == 'schedule'
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: habits
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup k6
         uses: grafana/setup-k6-action@v1
+
+      - name: Build Docker image
+        run: docker build -t habit-tracker-api:latest .
+
+      - name: Run API container
+        run: |
+          docker run -d \
+            --name api \
+            --network host \
+            -e DATABASE_URL=postgresql://user:password@localhost:5432/habits \
+            -e DB_HOST=localhost \
+            -e DB_PORT=5432 \
+            -e DB_USER=user \
+            -e DB_PASSWORD=password \
+            -e DB_NAME=habits \
+            habit-tracker-api:latest
+
+      - name: Wait for API to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:8001/health 2>/dev/null; then
+              echo "API is ready!"
+              exit 0
+            fi
+            echo "Waiting for API... ($i/30)"
+            sleep 1
+          done
+          echo "API failed to start!"
+          docker logs api
+          exit 1
 
       - name: Run load test (10→100 VU, 1 min)
         run: k6 run perf/load-test.js
