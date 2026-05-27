@@ -24,22 +24,15 @@ from .auth import (
 )
 from .metrics import http_requests_total, http_request_duration_seconds
 
-# OpenTelemetry Setup
+# OpenTelemetry Setup - disabled to avoid dependency issues
 import os
 from opentelemetry import trace as otel_trace
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
-# OTLP Exporter with gRPC (disabled if OTEL_TRACES_EXPORTER=none)
+# Use no-op provider when Jaeger tracing is disabled
 trace_provider = TracerProvider()
-if os.getenv("OTEL_TRACES_EXPORTER", "jaeger") != "none":
-    otlp_exporter = OTLPSpanExporter(
-        endpoint="http://jaeger:4317",  # Jaeger OTLP gRPC endpoint
-    )
-    trace_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
 otel_trace.set_tracer_provider(trace_provider)
 
 logger = logging.getLogger(__name__)
