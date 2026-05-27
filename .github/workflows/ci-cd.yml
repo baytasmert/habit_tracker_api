@@ -285,12 +285,14 @@ jobs:
           docker run -d \
             --name api \
             --network host \
+            -e PORT=8001 \
             -e DATABASE_URL=postgresql://user:password@localhost:5432/habits \
             -e DB_HOST=localhost \
             -e DB_PORT=5432 \
             -e DB_USER=user \
             -e DB_PASSWORD=password \
             -e DB_NAME=habits \
+            -e OTEL_TRACES_EXPORTER=none \
             habit-tracker-api:latest
 
       - name: Wait for API to be ready
@@ -355,12 +357,14 @@ jobs:
           docker run -d \
             --name api \
             --network host \
+            -e PORT=8001 \
             -e DATABASE_URL=postgresql://user:password@localhost:5432/habits \
             -e DB_HOST=localhost \
             -e DB_PORT=5432 \
             -e DB_USER=user \
             -e DB_PASSWORD=password \
             -e DB_NAME=habits \
+            -e OTEL_TRACES_EXPORTER=none \
             habit-tracker-api:latest
 
       - name: Wait for API to be ready

@@ -25,6 +25,7 @@ from .auth import (
 from .metrics import http_requests_total, http_request_duration_seconds
 
 # OpenTelemetry Setup
+import os
 from opentelemetry import trace as otel_trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -32,15 +33,14 @@ from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
-# Jaeger Exporter
-jaeger_exporter = JaegerExporter(
-    agent_host_name="jaeger",
-    agent_port=6831,
-)
-
-# Trace Provider
+# Jaeger Exporter (disabled if OTEL_TRACES_EXPORTER=none)
 trace_provider = TracerProvider()
-trace_provider.add_span_processor(BatchSpanProcessor(jaeger_exporter))
+if os.getenv("OTEL_TRACES_EXPORTER", "jaeger") != "none":
+    jaeger_exporter = JaegerExporter(
+        agent_host_name="jaeger",
+        agent_port=6831,
+    )
+    trace_provider.add_span_processor(BatchSpanProcessor(jaeger_exporter))
 otel_trace.set_tracer_provider(trace_provider)
 
 logger = logging.getLogger(__name__)
