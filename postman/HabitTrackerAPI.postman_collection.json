@@ -169,7 +169,12 @@
       ],
       "request": {
         "method": "POST",
-        "header": [],
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\r\n  \"name\": \"Koşu\",\r\n  \"description\": \"Günlük 30 dakika koşu\",\r\n  \"goal_days_per_week\": 5\r\n}\r\n",
@@ -216,7 +221,12 @@
       ],
       "request": {
         "method": "GET",
-        "header": [],
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
         "url": {
           "raw": "{{base_url}}/habits",
           "host": [
@@ -254,7 +264,12 @@
       ],
       "request": {
         "method": "GET",
-        "header": [],
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
         "url": {
           "raw": "{{base_url}}/habits/{{habit_id}}",
           "host": [
@@ -293,7 +308,12 @@
       ],
       "request": {
         "method": "POST",
-        "header": [],
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\r\n  \"done\": true,\r\n  \"date\": null\r\n}",
@@ -341,7 +361,12 @@
       ],
       "request": {
         "method": "GET",
-        "header": [],
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
         "url": {
           "raw": "{{base_url}}/habits/{{habit_id}}/streak",
           "host": [
@@ -378,7 +403,12 @@
       ],
       "request": {
         "method": "PATCH",
-        "header": [],
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\r\n  \"name\": \"Uzun Koşu\",\r\n  \"goal_days_per_week\": 6\r\n}",
@@ -420,7 +450,12 @@
       ],
       "request": {
         "method": "DELETE",
-        "header": [],
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
         "url": {
           "raw": "{{base_url}}/habits/{{habit_id}}",
           "host": [
@@ -441,8 +476,8 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test('Status code is 403 Forbidden', function () {",
-              "    pm.response.to.have.status(403);",
+              "pm.test('Status code is 401 Unauthorized', function () {",
+              "    pm.response.to.have.status(401);",
               "});",
               "pm.test('Error message exists', function () {",
               "    pm.expect(pm.response.json()).to.have.property('detail');",
@@ -525,7 +560,12 @@
       ],
       "request": {
         "method": "GET",
-        "header": [],
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
         "url": {
           "raw": "{{base_url}}/habits/99999",
           "host": [
