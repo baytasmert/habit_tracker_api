@@ -1,0 +1,67 @@
+name: Performance Test
+
+on:
+  pull_request:
+  schedule:
+    - cron: '0 2 * * *'  # nightly at 2 AM
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    name: k6 Smoke Test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run smoke test (5 VU, 30s)
+        run: k6 run perf/smoke-test.js
+        continue-on-error: true
+
+  load-test:
+    runs-on: ubuntu-latest
+    name: k6 Load Test
+    needs: smoke-test
+    if: github.event_name == 'pull_request' || github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run load test (10→100 VU, 1 min)
+        run: k6 run perf/load-test.js
+        continue-on-error: false
+
+      - name: Upload k6 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-results
+          path: |
+            summary.json
+            results/
+
+  stress-test:
+    runs-on: ubuntu-latest
+    name: k6 Stress Test (Nightly)
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run stress test (100→1000 VU, 30 min)
+        run: k6 run perf/stress-test.js
+        continue-on-error: true
+
+      - name: Upload stress results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-stress-results
+          path: |
+            summary.json
+            results/
