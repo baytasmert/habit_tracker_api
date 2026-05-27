@@ -14,11 +14,14 @@ class User(Base):
     avatar_url = Column(String, nullable=True)
     created_at = Column(Date, default=date.today)
 
+    habits = relationship("Habit", back_populates="user", cascade="all, delete-orphan")
+
 
 class Habit(Base):
     __tablename__ = "habits"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     category = Column(String, default="other")
@@ -30,8 +33,9 @@ class Habit(Base):
     created_at = Column(Date, default=date.today)
     updated_at = Column(Date, onupdate=date.today)
 
+    user = relationship("User", back_populates="habits")
     logs = relationship(
-        "HabitLog", back_populates="habit", cascade="all, delete-orphan"
+        "HabitLog", back_populates="habit", cascade="all, delete-orphan", lazy="selectin"
     )
 
     @property

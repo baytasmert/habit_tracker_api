@@ -174,15 +174,20 @@ def list_habits(
     db: Session = Depends(get_db)
 ):
     logger.info(f"Fetching habits for user: {current_user.id}")
-    habits = db.query(Habit).all()
+    habits = db.query(Habit).filter(Habit.user_id == current_user.id).all()
     logger.info(f"Retrieved {len(habits)} habits for user: {current_user.id}")
     return habits
 
 
 @app.post("/habits", response_model=HabitResponse, status_code=201)
-def create_habit(payload: HabitCreate, db: Session = Depends(get_db)):
+def create_habit(
+    payload: HabitCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     from .metrics import habits_created_total
     db_habit = Habit(
+        user_id=current_user.id,
         name=payload.name,
         description=payload.description,
         goal_days_per_week=payload.goal_days_per_week,
@@ -196,8 +201,15 @@ def create_habit(payload: HabitCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/habits/{habit_id}", response_model=HabitResponse)
-def get_habit(habit_id: int, db: Session = Depends(get_db)):
-    habit = db.query(Habit).filter(Habit.id == habit_id).first()
+def get_habit(
+    habit_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    habit = db.query(Habit).filter(
+        Habit.id == habit_id,
+        Habit.user_id == current_user.id
+    ).first()
     if not habit:
         raise HTTPException(status_code=404, detail="Habit not found")
     return habit
@@ -207,10 +219,14 @@ def get_habit(habit_id: int, db: Session = Depends(get_db)):
 async def track_habit(
     habit_id: int,
     payload: TrackRequest,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     from .metrics import habit_logs_created_total
-    habit = db.query(Habit).filter(Habit.id == habit_id).first()
+    habit = db.query(Habit).filter(
+        Habit.id == habit_id,
+        Habit.user_id == current_user.id
+    ).first()
     if not habit:
         raise HTTPException(status_code=404, detail="Habit not found")
 
@@ -243,8 +259,15 @@ async def track_habit(
 
 
 @app.get("/habits/{habit_id}/streak", response_model=StreakResponse)
-def get_streak(habit_id: int, db: Session = Depends(get_db)):
-    habit = db.query(Habit).filter(Habit.id == habit_id).first()
+def get_streak(
+    habit_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    habit = db.query(Habit).filter(
+        Habit.id == habit_id,
+        Habit.user_id == current_user.id
+    ).first()
     if not habit:
         raise HTTPException(status_code=404, detail="Habit not found")
 
@@ -257,8 +280,15 @@ def get_streak(habit_id: int, db: Session = Depends(get_db)):
 
 
 @app.delete("/habits/{habit_id}", status_code=204)
-def delete_habit(habit_id: int, db: Session = Depends(get_db)):
-    habit = db.query(Habit).filter(Habit.id == habit_id).first()
+def delete_habit(
+    habit_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    habit = db.query(Habit).filter(
+        Habit.id == habit_id,
+        Habit.user_id == current_user.id
+    ).first()
     if not habit:
         raise HTTPException(status_code=404, detail="Habit not found")
 
@@ -270,9 +300,13 @@ def delete_habit(habit_id: int, db: Session = Depends(get_db)):
 def update_habit(
     habit_id: int,
     payload: dict,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    habit = db.query(Habit).filter(Habit.id == habit_id).first()
+    habit = db.query(Habit).filter(
+        Habit.id == habit_id,
+        Habit.user_id == current_user.id
+    ).first()
     if not habit:
         raise HTTPException(status_code=404, detail="Habit not found")
 
