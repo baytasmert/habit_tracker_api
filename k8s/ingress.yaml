@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: habit-tracker-ingress
+  name: habit-tracker-api-ingress
   namespace: default
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
@@ -18,31 +18,38 @@ spec:
             name: habit-tracker-api-service
             port:
               number: 8001
-      - path: /grafana(/|$)(.*)
-        pathType: ImplementationSpecific
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: habit-tracker-ui-ingress
+  namespace: default
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: localhost
+    http:
+      paths:
+      - path: /grafana
+        pathType: Prefix
         backend:
           service:
             name: grafana-service
             port:
               number: 3000
-      - path: /jaeger(/|$)(.*)
-        pathType: ImplementationSpecific
+      - path: /jaeger
+        pathType: Prefix
         backend:
           service:
             name: jaeger
             port:
               number: 16686
-      - path: /prometheus(/|$)(.*)
-        pathType: ImplementationSpecific
+      - path: /prometheus
+        pathType: Prefix
         backend:
           service:
             name: prometheus-service
             port:
               number: 9090
-      - path: /argocd(/|$)(.*)
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: argocd-server
-            port:
-              number: 80
