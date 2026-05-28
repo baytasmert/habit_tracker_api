@@ -19,6 +19,8 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Kodunu kopyala
 COPY src ./src
 COPY tests ./tests
+COPY templates ./templates
+COPY static ./static
 COPY pytest.ini .
 
 # Port expose et

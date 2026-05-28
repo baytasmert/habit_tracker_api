@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>My Habits</h1>
+        <a href="/create-habit" class="btn btn-primary">Create Habit</a>
+    </div>
+
+    <div id="habitsList" class="habits-list">
+        <p class="loading">Loading habits...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadHabits() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
+    try {
+        const response = await fetch('/habits', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error('Failed to load habits');
+        }
+
+        const habits = await response.json();
+        const habitsList = document.getElementById('habitsList');
+
+        if (habits.length === 0) {
+            habitsList.innerHTML = '<p class="empty-state">No habits yet. <a href="/create-habit">Create one!</a></p>';
+            return;
+        }
+
+        habitsList.innerHTML = habits.map(habit => `
+            <div class="habit-card">
+                <h3>${habit.name || 'Untitled'}</h3>
+                <p>${habit.description || ''}</p>
+                <p class="habit-meta">Goal: ${habit.goal_days_per_week} days/week</p>
+                <div class="habit-actions">
+                    <a href="/edit-habit?id=${habit.id}" class="btn btn-secondary">View</a>
+                    <button class="btn btn-danger" onclick="deleteHabit(${habit.id})">Delete</button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        document.getElementById('habitsList').innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    }
+}
+
+async function deleteHabit(habitId) {
+    if (!confirm('Are you sure you want to delete this habit?')) {
+        return;
+    }
+
+    const token = localStorage.getItem('auth_token');
+    try {
+        const response = await fetch(`/habits/${habitId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            loadHabits();
+        } else {
+            alert('Failed to delete habit');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Load habits on page load
+loadHabits();
+</script>
+{% endblock %}

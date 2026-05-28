@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Create Habit - Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-card">
+        <h1>Create New Habit</h1>
+        <form id="createHabitForm">
+            <div class="form-group">
+                <label for="name">Habit Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" rows="4"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="goal_days_per_week">Goal (days per week):</label>
+                <select id="goal_days_per_week" name="goal_days_per_week" required>
+                    <option value="">Select...</option>
+                    <option value="1">1 day</option>
+                    <option value="2">2 days</option>
+                    <option value="3">3 days</option>
+                    <option value="4">4 days</option>
+                    <option value="5">5 days</option>
+                    <option value="6">6 days</option>
+                    <option value="7">7 days</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Create Habit</button>
+            <a href="/dashboard" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('createHabitForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
+    const name = document.getElementById('name').value;
+    const description = document.getElementById('description').value;
+    const goal_days_per_week = parseInt(document.getElementById('goal_days_per_week').value);
+
+    try {
+        const response = await fetch('/habits', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name,
+                description,
+                goal_days_per_week
+            })
+        });
+
+        if (response.ok) {
+            window.location.href = '/dashboard';
+        } else {
+            alert('Failed to create habit');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+});
+</script>
+{% endblock %}

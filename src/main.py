@@ -7,7 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
@@ -77,6 +79,13 @@ app = FastAPI(
     version="0.1.0"
 )
 app.state.limiter = limiter
+
+# Setup templates and static files
+templates_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'templates')
+static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
+
+templates = Jinja2Templates(directory=templates_dir)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # FastAPI Instrumentation (OTel)
 FastAPIInstrumentor.instrument_app(app)
@@ -177,6 +186,56 @@ def startup():
     # Fresh start: drop all tables and recreate (safe for dev/test)
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
+
+
+# Frontend Routes (HTML/Template serving)
+@app.get("/")
+def home():
+    """Redirect to dashboard if authenticated, login if not"""
+    return RedirectResponse(url="/register")
+
+
+@app.get("/register", response_class=templates.TemplateResponse.__class__)
+async def register_page(request: Request):
+    """Register page"""
+    return templates.TemplateResponse("register.html", {"request": request})
+
+
+@app.get("/login", response_class=templates.TemplateResponse.__class__)
+async def login_page(request: Request):
+    """Login page"""
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@app.get("/dashboard", response_class=templates.TemplateResponse.__class__)
+async def dashboard_page(request: Request):
+    """Dashboard page (requires auth)"""
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+
+@app.get("/create-habit", response_class=templates.TemplateResponse.__class__)
+async def create_habit_page(request: Request):
+    """Create habit page (requires auth)"""
+    return templates.TemplateResponse("create_habit.html", {"request": request})
+
+
+@app.get("/habits/{habit_id}/detail", response_class=templates.TemplateResponse.__class__)
+async def habit_detail_page(request: Request, habit_id: int):
+    """Habit detail page (requires auth)"""
+    return templates.TemplateResponse("habit_detail.html", {"request": request, "habit_id": habit_id})
+
+
+@app.get("/edit-habit", response_class=templates.TemplateResponse.__class__)
+async def edit_habit_page(request: Request):
+    """Edit habit page (requires auth) - redirects to detail page"""
+    habit_id = request.query_params.get("id")
+    return templates.TemplateResponse("habit_detail.html", {"request": request, "habit_id": habit_id})
+
+
+@app.get("/logout")
+async def logout_page():
+    """Logout and redirect to login"""
+    return RedirectResponse(url="/login")
 
 
 def compute_streak(history: dict) -> tuple[int, Optional[date]]:

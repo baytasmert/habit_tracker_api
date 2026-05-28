@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Habit Details - Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <a href="/dashboard" class="btn btn-secondary">← Back to Dashboard</a>
+
+    <div class="detail-card" id="habitDetail">
+        <p class="loading">Loading habit...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const habitId = new URLSearchParams(window.location.search).get('id');
+
+async function loadHabitDetail() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
+    if (!habitId) {
+        document.getElementById('habitDetail').innerHTML = '<p class="error">Habit ID not found</p>';
+        return;
+    }
+
+    try {
+        // Load habit
+        const habitResponse = await fetch(`/habits/${habitId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (habitResponse.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!habitResponse.ok) {
+            throw new Error('Habit not found');
+        }
+
+        const habit = await habitResponse.json();
+
+        // Load streak
+        const streakResponse = await fetch(`/habits/${habitId}/streak`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        let streakData = null;
+        if (streakResponse.ok) {
+            streakData = await streakResponse.json();
+        }
+
+        // Render
+        document.getElementById('habitDetail').innerHTML = `
+            <h1>${habit.name || 'Untitled'}</h1>
+            <p class="description">${habit.description || 'No description'}</p>
+
+            <div class="habit-stats">
+                <div class="stat">
+                    <span class="stat-label">Goal:</span>
+                    <span class="stat-value">${habit.goal_days_per_week} days/week</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Current Streak:</span>
+                    <span class="stat-value">${streakData ? streakData.streak_days + ' days' : '0 days'}</span>
+                </div>
+            </div>
+
+            <div class="habit-actions">
+                <button class="btn btn-primary" onclick="trackHabit()">Track</button>
+                <button class="btn btn-secondary" onclick="editHabit()">Edit</button>
+                <button class="btn btn-danger" onclick="deleteHabit()">Delete</button>
+            </div>
+
+            <div id="editForm" style="display: none;" class="edit-form">
+                <h3>Edit Habit</h3>
+                <form id="editHabitForm">
+                    <div class="form-group">
+                        <label for="edit_name">Habit Name:</label>
+                        <input type="text" id="edit_name" name="name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_description">Description:</label>
+                        <textarea id="edit_description" name="description" rows="4"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_goal">Goal (days per week):</label>
+                        <select id="edit_goal" name="goal_days_per_week" required>
+                            <option value="1">1 day</option>
+                            <option value="2">2 days</option>
+                            <option value="3">3 days</option>
+                            <option value="4">4 days</option>
+                            <option value="5">5 days</option>
+                            <option value="6">6 days</option>
+                            <option value="7">7 days</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editForm').style.display='none'">Cancel</button>
+                </form>
+            </div>
+
+            <div id="trackForm" style="display: none;" class="track-form">
+                <h3>Log Today's Activity</h3>
+                <form id="trackActivityForm">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="done" id="done">
+                            Completed
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="duration">Duration (minutes):</label>
+                        <input type="number" id="duration" name="duration" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mood">Mood (1-5):</label>
+                        <select id="mood" name="mood">
+                            <option value="">Select...</option>
+                            <option value="1">😞 1 - Poor</option>
+                            <option value="2">😕 2 - Fair</option>
+                            <option value="3">😐 3 - OK</option>
+                            <option value="4">🙂 4 - Good</option>
+                            <option value="5">😄 5 - Excellent</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('trackForm').style.display='none'">Cancel</button>
+                </form>
+            </div>
+        `;
+
+        document.getElementById('trackActivityForm').addEventListener('submit', saveTracking);
+        document.getElementById('editHabitForm').addEventListener('submit', saveEdit);
+
+        // Pre-fill edit form with current values
+        document.getElementById('edit_name').value = habit.name || '';
+        document.getElementById('edit_description').value = habit.description || '';
+        document.getElementById('edit_goal').value = habit.goal_days_per_week || '5';
+
+    } catch (error) {
+        document.getElementById('habitDetail').innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    }
+}
+
+function trackHabit() {
+    document.getElementById('trackForm').style.display = 'block';
+}
+
+function editHabit() {
+    document.getElementById('editForm').style.display = 'block';
+}
+
+async function saveTracking(e) {
+    e.preventDefault();
+
+    const token = localStorage.getItem('auth_token');
+    const done = document.getElementById('done').checked;
+    const duration = parseInt(document.getElementById('duration').value) || 0;
+    const mood = document.getElementById('mood').value ? parseInt(document.getElementById('mood').value) : null;
+
+    try {
+        const response = await fetch(`/habits/${habitId}/track`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                done,
+                duration,
+                mood
+            })
+        });
+
+        if (response.ok) {
+            document.getElementById('trackForm').style.display = 'none';
+            loadHabitDetail();
+        } else {
+            alert('Failed to save tracking');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function saveEdit(e) {
+    e.preventDefault();
+
+    const token = localStorage.getItem('auth_token');
+    const name = document.getElementById('edit_name').value;
+    const description = document.getElementById('edit_description').value;
+    const goal_days_per_week = parseInt(document.getElementById('edit_goal').value);
+
+    try {
+        const response = await fetch(`/habits/${habitId}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name,
+                description,
+                goal_days_per_week
+            })
+        });
+
+        if (response.ok) {
+            document.getElementById('editForm').style.display = 'none';
+            loadHabitDetail();
+        } else {
+            alert('Failed to save habit');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function deleteHabit() {
+    if (!confirm('Are you sure you want to delete this habit?')) {
+        return;
+    }
+
+    const token = localStorage.getItem('auth_token');
+    try {
+        const response = await fetch(`/habits/${habitId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            window.location.href = '/dashboard';
+        } else {
+            alert('Failed to delete habit');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Load on page load
+loadHabitDetail();
+</script>
+{% endblock %}
