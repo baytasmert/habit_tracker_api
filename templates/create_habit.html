@@ -138,7 +138,7 @@ function getToken() {
     return null;
 }
 
-const token = getToken();
+const authToken = getToken();
 
 // Handle habit_type radio buttons - show/hide conditional fields
 document.querySelectorAll('input[name="habit_type"]').forEach(radio => {
@@ -168,7 +168,7 @@ document.getElementById('color').addEventListener('change', (e) => {
 document.getElementById('createHabitForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    if (!token) {
+    if (!authToken) {
         window.location.href = '/login';
         return;
     }
@@ -216,7 +216,7 @@ document.getElementById('createHabitForm').addEventListener('submit', async (e) 
         const response = await fetch('/habits', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
+                'Authorization': `Bearer ${authToken}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(createPayload)
@@ -237,7 +237,7 @@ document.getElementById('createHabitForm').addEventListener('submit', async (e) 
             const imageResponse = await fetch(`/habits/${habit.id}/image`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: formData
             });

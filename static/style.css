@@ -198,6 +198,41 @@ body {
 /* Forms */
 .form-group {
     margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: var(--text);
+    display: block;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="number"],
+.form-group input[type="color"],
+.form-group input[type="file"],
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 1rem;
+}
+
+.form-group input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.form-group input[type="checkbox"] + span,
+.form-group label > span {
+    margin-left: 0.5rem;
 }
 
 label {
