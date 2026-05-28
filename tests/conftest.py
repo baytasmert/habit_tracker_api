@@ -8,6 +8,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import factory
 from playwright.sync_api import sync_playwright
+from src.main import app
+from src.database import Base, get_db
+from tests.factories import UserFactory, HabitFactory, HabitLogFactory
 
 # Disable OpenTelemetry export during tests (no Jaeger in test environment)
 os.environ["OTEL_TRACES_EXPORTER"] = "none"
@@ -18,10 +21,6 @@ default_host = "db" if platform.system() == "Linux" else "localhost"
 db_host = os.getenv("DB_HOST", default_host)
 database_url = f"postgresql://user:password@{db_host}:5432/habits"
 os.environ["DATABASE_URL"] = database_url
-
-from src.main import app
-from src.database import Base, get_db
-from tests.factories import UserFactory, HabitFactory, HabitLogFactory
 
 # Create test engine that connects to PostgreSQL
 test_engine = create_engine(
@@ -149,8 +148,6 @@ def authenticated_user(api_url, test_user):
 
 
 # Playwright E2E Test Fixtures
-from playwright.sync_api import sync_playwright
-
 @pytest.fixture
 def page():
     """Playwright browser page fixture for E2E tests"""
