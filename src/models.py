@@ -29,6 +29,7 @@ class Habit(Base):
     target_duration = Column(Integer, nullable=True)
     reminder_time = Column(String, nullable=True)
     color = Column(String, default="#3B82F6")
+    image_url = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(Date, default=date.today)
     updated_at = Column(Date, onupdate=date.today)

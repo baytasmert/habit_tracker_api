@@ -471,6 +471,34 @@ def update_habit(
     return habit
 
 
+@app.post("/habits/{habit_id}/image")
+async def upload_habit_image(
+    habit_id: int,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    habit = db.query(Habit).filter(
+        Habit.id == habit_id,
+        Habit.user_id == current_user.id
+    ).first()
+    if not habit:
+        raise HTTPException(status_code=404, detail="Habit not found")
+
+    file_content = await file.read()
+    s3 = S3Service()
+    file_key = f"habits/habit-{habit_id}.jpg"
+    url = s3.upload_file(file_key, file_content)
+
+    if not url:
+        raise HTTPException(status_code=500, detail="Image upload failed")
+
+    habit.image_url = url
+    db.commit()
+    db.refresh(habit)
+    return {"image_url": habit.image_url}
+
+
 @app.post("/login")
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
     logger.info(f"Login attempt for user: {payload.username}")

@@ -61,7 +61,13 @@ async function loadHabitDetail() {
         }
 
         // Render
+        let imageHtml = '';
+        if (habit.image_url) {
+            imageHtml = `<img src="${habit.image_url}" alt="${habit.name}" class="habit-detail-image">`;
+        }
+
         document.getElementById('habitDetail').innerHTML = `
+            ${imageHtml}
             <h1>${habit.name || 'Untitled'}</h1>
             <p class="description">${habit.description || 'No description'}</p>
 
@@ -106,6 +112,12 @@ async function loadHabitDetail() {
                             <option value="6">6 days</option>
                             <option value="7">7 days</option>
                         </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_image">Habit Photo (Optional):</label>
+                        <input type="file" id="edit_image" name="image" accept="image/*">
+                        <small>Upload a new photo to replace the current one</small>
                     </div>
 
                     <button type="submit" class="btn btn-primary">Save</button>
@@ -205,6 +217,7 @@ async function saveEdit(e) {
     const name = document.getElementById('edit_name').value;
     const description = document.getElementById('edit_description').value;
     const goal_days_per_week = parseInt(document.getElementById('edit_goal').value);
+    const imageFile = document.getElementById('edit_image').files[0];
 
     try {
         const response = await fetch(`/habits/${habitId}`, {
@@ -220,12 +233,30 @@ async function saveEdit(e) {
             })
         });
 
-        if (response.ok) {
-            document.getElementById('editForm').style.display = 'none';
-            loadHabitDetail();
-        } else {
+        if (!response.ok) {
             alert('Failed to save habit');
+            return;
         }
+
+        if (imageFile) {
+            const formData = new FormData();
+            formData.append('file', imageFile);
+
+            const imageResponse = await fetch(`/habits/${habitId}/image`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!imageResponse.ok) {
+                console.error('Image upload failed');
+            }
+        }
+
+        document.getElementById('editForm').style.display = 'none';
+        loadHabitDetail();
     } catch (error) {
         alert('Error: ' + error.message);
     }

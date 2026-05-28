@@ -909,3 +909,96 @@ a:hover {
     color: var(--text-light);
     font-size: 0.95rem;
 }
+
+/* Habit Detail Page */
+.detail-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.detail-card {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.detail-card h1 {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+}
+
+.habit-detail-image {
+    width: 100%;
+    max-height: 400px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+}
+
+.description {
+    color: var(--text-light);
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.habit-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-label {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.stat-value {
+    color: var(--primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.habit-actions {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.habit-actions .btn {
+    flex: 1;
+}
+
+.edit-form,
+.track-form {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: var(--light);
+    border-radius: 8px;
+    display: none;
+}
+
+.edit-form.visible,
+.track-form.visible {
+    display: block;
+}
+
+.edit-form h3,
+.track-form h3 {
+    margin-bottom: 1rem;
+    color: var(--text);
+}

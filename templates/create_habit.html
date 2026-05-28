@@ -31,6 +31,12 @@
                 </select>
             </div>
 
+            <div class="form-group">
+                <label for="image">Habit Photo (Optional):</label>
+                <input type="file" id="image" name="image" accept="image/*">
+                <small>Upload a photo for your habit (optional)</small>
+            </div>
+
             <button type="submit" class="btn btn-primary">Create Habit</button>
             <a href="/dashboard" class="btn btn-secondary">Cancel</a>
         </form>
@@ -51,6 +57,7 @@ document.getElementById('createHabitForm').addEventListener('submit', async (e) 
     const name = document.getElementById('name').value;
     const description = document.getElementById('description').value;
     const goal_days_per_week = parseInt(document.getElementById('goal_days_per_week').value);
+    const imageFile = document.getElementById('image').files[0];
 
     try {
         const response = await fetch('/habits', {
@@ -66,11 +73,31 @@ document.getElementById('createHabitForm').addEventListener('submit', async (e) 
             })
         });
 
-        if (response.ok) {
-            window.location.href = '/my-habits';
-        } else {
+        if (!response.ok) {
             alert('Failed to create habit');
+            return;
         }
+
+        const habit = await response.json();
+
+        if (imageFile) {
+            const formData = new FormData();
+            formData.append('file', imageFile);
+
+            const imageResponse = await fetch(`/habits/${habit.id}/image`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!imageResponse.ok) {
+                console.error('Image upload failed');
+            }
+        }
+
+        window.location.href = '/my-habits';
     } catch (error) {
         alert('Error: ' + error.message);
     }
