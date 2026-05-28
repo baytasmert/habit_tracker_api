@@ -12,6 +12,7 @@ metadata:
 data:
   # 🔌 API Konfigürasyonu
   PORT: "8000"
+  OTEL_TRACES_EXPORTER: "none"
   # 🗄️ Database Konfigürasyonu
   DATABASE_URL: "postgresql://user:password@postgres-service:5432/habits"
   DB_HOST: "postgres-service"
