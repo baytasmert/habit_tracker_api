@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from slowapi import Limiter
@@ -190,9 +190,24 @@ def startup():
 
 # Frontend Routes (HTML/Template serving)
 @app.get("/")
-def home(request: Request):
-    """Welcome/index page"""
+def index(request: Request):
+    """Welcome/index page - redirects to /home if authenticated"""
+    token = request.cookies.get("auth_token")
+    if token:
+        return RedirectResponse(url="/home", status_code=302)
     return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/home", response_class=templates.TemplateResponse.__class__)
+async def home(request: Request, current_user: User = Depends(get_current_user)):
+    """Authenticated home page with profile and stats"""
+    return templates.TemplateResponse("home.html", {"request": request, "user": current_user})
+
+
+@app.get("/habits", response_class=templates.TemplateResponse.__class__)
+async def habits(request: Request, current_user: User = Depends(get_current_user)):
+    """Habits management page"""
+    return templates.TemplateResponse("habits.html", {"request": request, "user": current_user})
 
 
 @app.get("/register", response_class=templates.TemplateResponse.__class__)
@@ -207,10 +222,33 @@ async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
 
-@app.get("/dashboard", response_class=templates.TemplateResponse.__class__)
-async def dashboard_page(request: Request):
-    """Dashboard page (requires auth)"""
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+@app.get("/avatars/{user_id}")
+async def get_avatar(user_id: int, db: Session = Depends(get_db)):
+    """Proxy avatar from S3 - browser accesses API instead of S3 directly"""
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user or not user.avatar_url:
+        static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
+        default_avatar_path = os.path.join(static_dir, 'default-avatar.svg')
+        return FileResponse(default_avatar_path, media_type="image/svg+xml")
+
+    try:
+        s3 = S3Service()
+        file_key = f"avatars/user-{user_id}.jpg"
+        file_data = s3.download_file(file_key)
+
+        if not file_data:
+            static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
+            default_avatar_path = os.path.join(static_dir, 'default-avatar.svg')
+            return FileResponse(default_avatar_path, media_type="image/svg+xml")
+
+        return StreamingResponse(iter([file_data]), media_type="image/jpeg", headers={
+            "Cache-Control": "public, max-age=3600"
+        })
+    except Exception:
+        static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
+        default_avatar_path = os.path.join(static_dir, 'default-avatar.svg')
+        return FileResponse(default_avatar_path, media_type="image/svg+xml")
 
 
 @app.get("/create-habit", response_class=templates.TemplateResponse.__class__)

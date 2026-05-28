@@ -47,7 +47,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         if (response.ok) {
             const data = await response.json();
             localStorage.setItem('auth_token', data.access_token);
-            window.location.href = '/dashboard';
+            window.location.href = '/home';
         } else {
             alert('Invalid credentials');
         }

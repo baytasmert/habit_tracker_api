@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Habits - Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="habits-container">
+    <div class="habits-header">
+        <div class="header-left">
+            <a href="/home" class="btn btn-outline btn-small">← Back to Home</a>
+            <h1>My Habits</h1>
+        </div>
+        <a href="/create-habit" class="btn btn-primary">+ Create Habit</a>
+    </div>
+
+    <div id="habitsList" class="habits-grid">
+        <p class="loading">Loading habits...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const token = localStorage.getItem('auth_token');
+
+async function loadHabits() {
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
+    try {
+        const response = await fetch('/habits', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error('Failed to load habits');
+        }
+
+        const habits = await response.json();
+        const habitsList = document.getElementById('habitsList');
+
+        if (habits.length === 0) {
+            habitsList.innerHTML = '<p class="empty-state">No habits yet. <a href="/create-habit">Create one now!</a></p>';
+            return;
+        }
+
+        habitsList.innerHTML = habits.map(habit => `
+            <div class="habit-card">
+                <div class="habit-card-header">
+                    <h3>${habit.name || 'Untitled'}</h3>
+                    <button class="btn-icon" onclick="deleteHabit(${habit.id}, '${habit.name}')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </div>
+                <p class="habit-description">${habit.description || 'No description'}</p>
+                <div class="habit-meta">
+                    <span class="badge">Goal: ${habit.goal_days_per_week} days/week</span>
+                </div>
+                <div class="habit-actions">
+                    <a href="/edit-habit?id=${habit.id}" class="btn btn-secondary">View Details</a>
+                    <button class="btn btn-outline" onclick="trackHabit(${habit.id})">Track Today</button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        document.getElementById('habitsList').innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    }
+}
+
+async function deleteHabit(habitId, habitName) {
+    if (!confirm(`Delete "${habitName}"? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/habits/${habitId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            loadHabits();
+        } else {
+            alert('Failed to delete habit');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function trackHabit(habitId) {
+    try {
+        const response = await fetch(`/habits/${habitId}/track`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ habit_id: habitId, date: new Date().toISOString().split('T')[0] })
+        });
+
+        if (response.ok) {
+            alert('Habit tracked! Great job! 🎉');
+            loadHabits();
+        } else {
+            alert('Failed to track habit');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+loadHabits();
+</script>
+{% endblock %}

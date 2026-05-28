@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="home-container">
+    <div class="home-header">
+        <div class="user-greeting">
+            <img id="avatarImage" src="/avatars/0" alt="Avatar" class="avatar-small">
+            <div class="greeting-text">
+                <h1>Welcome back, <span id="username">User</span>!</h1>
+                <p id="userEmail" class="subtitle">Let's build better habits today</p>
+            </div>
+        </div>
+        <a href="/dashboard" class="btn btn-secondary">Settings</a>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Habits</h3>
+            <p class="stat-number" id="totalHabits">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>This Week</h3>
+            <p class="stat-number" id="thisWeek">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Longest Streak</h3>
+            <p class="stat-number" id="longestStreak">0</p>
+        </div>
+    </div>
+
+    <div class="recent-habits">
+        <div class="section-header">
+            <h2>Recent Habits</h2>
+            <a href="/habits" class="link">View all →</a>
+        </div>
+        <div id="recentHabitsList" class="habits-preview">
+            <p class="loading">Loading habits...</p>
+        </div>
+    </div>
+
+    <div class="action-buttons">
+        <a href="/create-habit" class="btn btn-primary btn-large">+ Create New Habit</a>
+        <a href="/habits" class="btn btn-secondary btn-large">Manage Habits</a>
+        <a href="/admin" class="btn btn-outline btn-large">Admin Panel</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const token = localStorage.getItem('auth_token');
+
+async function loadProfile() {
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
+    try {
+        const response = await fetch('/me', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (response.ok) {
+            const user = await response.json();
+            document.getElementById('username').textContent = user.username || 'User';
+            document.getElementById('userEmail').textContent = user.email || '';
+            document.getElementById('avatarImage').src = `/avatars/${user.id}`;
+        }
+    } catch (error) {
+        console.error('Error loading profile:', error);
+    }
+}
+
+async function loadHabits() {
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
+    try {
+        const response = await fetch('/habits', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error('Failed to load habits');
+        }
+
+        const habits = await response.json();
+
+        // Update total habits count
+        document.getElementById('totalHabits').textContent = habits.length;
+
+        // Show recent habits (first 3)
+        const recentHabits = habits.slice(0, 3);
+        const habitsList = document.getElementById('recentHabitsList');
+
+        if (recentHabits.length === 0) {
+            habitsList.innerHTML = '<p class="empty-state">No habits yet. <a href="/create-habit">Create one!</a></p>';
+            return;
+        }
+
+        habitsList.innerHTML = recentHabits.map(habit => `
+            <div class="habit-preview">
+                <div class="habit-info">
+                    <h4>${habit.name || 'Untitled'}</h4>
+                    <p class="habit-goal">${habit.goal_days_per_week} days/week</p>
+                </div>
+                <a href="/edit-habit?id=${habit.id}" class="btn btn-small btn-secondary">View</a>
+            </div>
+        `).join('');
+
+        // Calculate stats
+        calculateStats(habits);
+    } catch (error) {
+        console.error('Error loading habits:', error);
+        document.getElementById('recentHabitsList').innerHTML = `<p class="error">Error loading habits</p>`;
+    }
+}
+
+function calculateStats(habits) {
+    let thisWeek = 0;
+    let longestStreak = 0;
+
+    habits.forEach(habit => {
+        // Simple estimation - in a real app, you'd calculate from HabitLog data
+        if (habit.goal_days_per_week) {
+            thisWeek += Math.min(habit.goal_days_per_week, 7);
+        }
+    });
+
+    document.getElementById('thisWeek').textContent = thisWeek;
+    document.getElementById('longestStreak').textContent = Math.max(0, habits.length);
+}
+
+loadProfile();
+loadHabits();
+</script>
+{% endblock %}

@@ -18,7 +18,7 @@
         <h2>My Profile</h2>
         <div class="profile-card">
             <div class="avatar-container">
-                <img id="avatarImage" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%234a90e2'/%3E%3Ctext x='50' y='50' font-size='50' fill='white' text-anchor='middle' dy='.3em'%3E👤%3C/text%3E%3C/svg%3E" alt="Avatar" class="avatar">
+                <img id="avatarImage" src="/avatars/0" alt="Avatar" class="avatar">
                 <div class="avatar-actions">
                     <label class="btn btn-small btn-primary">
                         Upload Photo
@@ -68,10 +68,7 @@ async function loadProfile() {
             const user = await response.json();
             document.getElementById('profileUsername').textContent = user.username || 'User';
             document.getElementById('profileEmail').textContent = user.email || 'No email';
-
-            if (user.avatar_url) {
-                document.getElementById('avatarImage').src = user.avatar_url;
-            }
+            document.getElementById('avatarImage').src = `/avatars/${user.id}`;
         }
     } catch (error) {
         console.error('Error loading profile:', error);
@@ -166,9 +163,9 @@ document.getElementById('avatarUpload').addEventListener('change', async (e) => 
 
         if (response.ok) {
             const data = await response.json();
-            if (data.avatar_url) {
-                document.getElementById('avatarImage').src = data.avatar_url + '?t=' + new Date().getTime();
-            }
+            // Reload avatar from proxy endpoint with cache busting
+            const userId = data.user_id;
+            document.getElementById('avatarImage').src = `/avatars/${userId}?t=` + new Date().getTime();
             alert('Avatar uploaded successfully!');
         } else {
             alert('Failed to upload avatar');
@@ -190,7 +187,9 @@ document.getElementById('deleteAvatarBtn').addEventListener('click', async () =>
         });
 
         if (response.ok) {
-            document.getElementById('avatarImage').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%234a90e2'/%3E%3Ctext x='50' y='50' font-size='50' fill='white' text-anchor='middle' dy='.3em'%3E👤%3C/text%3E%3C/svg%3E";
+            // Reload to show default avatar from proxy endpoint
+            const userId = document.getElementById('avatarImage').src.match(/\/avatars\/(\d+)/)?.[1] || '0';
+            document.getElementById('avatarImage').src = `/avatars/${userId}?t=` + new Date().getTime();
             alert('Avatar deleted!');
         } else {
             alert('Failed to delete avatar');
