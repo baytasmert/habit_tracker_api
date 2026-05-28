@@ -11,10 +11,10 @@ metadata:
   name: habit-tracker-api-service
   namespace: default
 spec:
-  type: LoadBalancer  # 📤 Pod'ları dış dünyaya expose et
+  type: ClusterIP  # Internal routing (port-forward via kubectl)
   selector:
     app: habit-tracker-api  # Hangi Pod'ları expose edecek (label match)
   ports:
   - protocol: TCP
-    port: 8001  # 🔌 Dışarıdan erişilen port
+    port: 8001  # 🔌 Service port
     targetPort: 8000  # 🎯 Pod'ların container portu

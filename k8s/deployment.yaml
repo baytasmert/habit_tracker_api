@@ -5,7 +5,7 @@ metadata:
   labels:
     app: habit-tracker-api
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: habit-tracker-api
@@ -17,9 +17,16 @@ spec:
       containers:
       - name: habit-tracker
         image: ghcr.io/baytasmert/habit-tracker-api:latest
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
         envFrom:
         - configMapRef:
             name: habit-tracker-config
