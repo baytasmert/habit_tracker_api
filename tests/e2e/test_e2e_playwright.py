@@ -34,9 +34,9 @@ class TestUserRegistrationAndLoginE2E:
         page.fill("input[name=password]", "password123")
         page.click("button:has-text('Login')")
 
-        # Should redirect to dashboard
-        page.wait_for_url(f"{api_url}/dashboard", timeout=5000)
-        expect(page).to_have_title("Dashboard - Habit Tracker")
+        # Should redirect to home
+        page.wait_for_url(f"{api_url}/home", timeout=5000)
+        expect(page).to_have_title("Home - Habit Tracker")
 
 
 class TestHabitCreationE2E:

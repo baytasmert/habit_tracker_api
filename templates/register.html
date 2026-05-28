@@ -9,22 +9,24 @@
         <form id="registerForm">
             <div class="form-group">
                 <label for="username">Username:</label>
-                <input type="text" id="username" name="username" required>
+                <input type="text" id="username" name="username" placeholder="Choose a username" autocomplete="username" required>
             </div>
 
             <div class="form-group">
                 <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                <small>We'll never share your email</small>
             </div>
 
             <div class="form-group">
                 <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required autocomplete="new-password">
+                <input type="password" id="password" name="password" placeholder="Min. 6 characters" autocomplete="new-password" required>
+                <small>Use a strong password with letters, numbers, and symbols</small>
             </div>
 
             <div class="form-group">
                 <label for="password-confirm">Confirm Password:</label>
-                <input type="password" id="password-confirm" name="password-confirm" required autocomplete="new-password">
+                <input type="password" id="password-confirm" name="password-confirm" placeholder="Re-enter your password" autocomplete="new-password" required>
             </div>
 
             <div class="form-group">
@@ -54,6 +56,19 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     const passwordConfirm = document.getElementById('password-confirm').value;
     const avatarFile = document.getElementById('avatar').files[0];
 
+    // Validate username
+    if (username.length < 3) {
+        alert('Username must be at least 3 characters long!');
+        return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        alert('Please enter a valid email address!');
+        return;
+    }
+
     if (password !== passwordConfirm) {
         alert('Passwords do not match!');
         return;
@@ -70,12 +85,21 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password, email })
         });
 
         if (!response.ok) {
             const data = await response.json();
-            alert('Error: ' + (data.detail || 'Registration failed'));
+            const errorMsg = data.detail || 'Registration failed';
+
+            // Show error message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-error';
+            alertDiv.textContent = 'Error: ' + errorMsg;
+            document.querySelector('.auth-form').prepend(alertDiv);
+
+            // Auto-remove error after 5 seconds
+            setTimeout(() => alertDiv.remove(), 5000);
             return;
         }
 
@@ -114,8 +138,16 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
             }
         }
 
-        alert('Registration successful! Redirecting to login...');
-        window.location.href = '/login';
+        // Show success message
+        const successDiv = document.createElement('div');
+        successDiv.className = 'alert alert-success';
+        successDiv.textContent = 'Registration successful! Redirecting to login in 2 seconds...';
+        document.querySelector('.auth-form').prepend(successDiv);
+
+        // Redirect after 2 seconds
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 2000);
     } catch (error) {
         alert('Error: ' + error.message);
     }

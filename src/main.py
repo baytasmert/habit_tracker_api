@@ -204,8 +204,8 @@ async def home(request: Request, current_user: User = Depends(get_current_user))
     return templates.TemplateResponse("home.html", {"request": request, "user": current_user})
 
 
-@app.get("/habits", response_class=templates.TemplateResponse.__class__)
-async def habits(request: Request, current_user: User = Depends(get_current_user)):
+@app.get("/my-habits", response_class=templates.TemplateResponse.__class__)
+async def habits_page(request: Request, current_user: User = Depends(get_current_user)):
     """Habits management page"""
     return templates.TemplateResponse("habits.html", {"request": request, "user": current_user})
 
