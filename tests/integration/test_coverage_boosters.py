@@ -2,9 +2,7 @@
 Coverage booster tests - cover critical paths in main.py
 Focuses on error handling, edge cases, and template routes
 """
-import pytest
 from datetime import date, timedelta
-from fastapi.testclient import TestClient
 
 
 class TestTemplateRoutes:
@@ -221,7 +219,7 @@ class TestStreakCalculation:
 
         # Track 3 consecutive days
         for i in range(3):
-            date_str = (date.today() - timedelta(days=2-i)).isoformat()
+            date_str = (date.today() - timedelta(days=2 - i)).isoformat()
             auth_client.post(f"/habits/{habit_id}/track", json={"done": True, "date": date_str})
 
         # Gap day
