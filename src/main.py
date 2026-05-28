@@ -190,9 +190,9 @@ def startup():
 
 # Frontend Routes (HTML/Template serving)
 @app.get("/")
-def home():
-    """Redirect to dashboard if authenticated, login if not"""
-    return RedirectResponse(url="/register")
+def home(request: Request):
+    """Welcome/index page"""
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.get("/register", response_class=templates.TemplateResponse.__class__)

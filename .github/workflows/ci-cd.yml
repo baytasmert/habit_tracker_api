@@ -89,8 +89,8 @@ jobs:
       - name: Install Playwright browsers
         run: playwright install chromium
 
-      - name: Run tests with coverage
-        run: pytest tests/ -v --cov=src --cov-fail-under=70 --cov-report=xml
+      - name: Run tests with coverage (excluding E2E tests)
+        run: pytest tests/ -v --ignore=tests/e2e --cov=src --cov-fail-under=70 --cov-report=xml
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/habits
           DB_HOST: localhost

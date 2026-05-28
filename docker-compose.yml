@@ -6,6 +6,8 @@ services:
       - "8001:8000"
     volumes:
       - ./src:/app/src
+      - ./templates:/app/templates
+      - ./static:/app/static
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - DB_HOST=${DB_HOST}

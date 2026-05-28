@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker - Build Better Habits</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .welcome-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .welcome-content {
+            max-width: 600px;
+        }
+        .welcome-content h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .welcome-content p {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            opacity: 0.95;
+            line-height: 1.6;
+        }
+        .welcome-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+        .welcome-buttons a {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            border: 2px solid white;
+        }
+        .welcome-buttons .btn-register {
+            background-color: white;
+            color: #667eea;
+        }
+        .welcome-buttons .btn-register:hover {
+            background-color: #f0f0f0;
+            transform: translateY(-2px);
+        }
+        .welcome-buttons .btn-login {
+            background-color: transparent;
+            color: white;
+        }
+        .welcome-buttons .btn-login:hover {
+            background-color: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 60px;
+            text-align: left;
+        }
+        .feature {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+        .feature h3 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        .feature p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-container">
+        <div class="welcome-content">
+            <h1>🎯 Habit Tracker</h1>
+            <p>Build better habits, one day at a time</p>
+            <p style="font-size: 1em; opacity: 0.85;">Track your daily habits, monitor your streaks, and achieve your goals with our simple and powerful habit tracking system.</p>
+
+            <div class="welcome-buttons">
+                <a href="/register" class="btn-register">Create Account</a>
+                <a href="/login" class="btn-login">Sign In</a>
+            </div>
+
+            <div class="features">
+                <div class="feature">
+                    <h3>📊 Track</h3>
+                    <p>Monitor your daily progress</p>
+                </div>
+                <div class="feature">
+                    <h3>🔥 Streaks</h3>
+                    <p>Build consistent habits</p>
+                </div>
+                <div class="feature">
+                    <h3>📈 Progress</h3>
+                    <p>Visualize your growth</p>
+                </div>
+                <div class="feature">
+                    <h3>🎯 Goals</h3>
+                    <p>Achieve your targets</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
