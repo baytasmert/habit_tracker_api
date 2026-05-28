@@ -135,3 +135,51 @@ def authenticated_user(api_url, test_user):
         "token": token,
         "user_id": user_id
     }
+
+
+# Playwright E2E Test Fixtures
+from playwright.sync_api import sync_playwright
+
+@pytest.fixture
+def page():
+    """Playwright browser page fixture for E2E tests"""
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        yield page
+        browser.close()
+
+
+@pytest.fixture
+def authenticated_page(api_url, test_user):
+    """Playwright page with authenticated session (logged-in user)"""
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+
+        # Register and login user
+        register_response = requests.post(
+            f"{api_url}/register",
+            json={"username": test_user["username"], "password": test_user["password"]}
+        )
+
+        if register_response.status_code != 201:
+            raise Exception(f"Registration failed: {register_response.text}")
+
+        # Login to get token
+        login_response = requests.post(
+            f"{api_url}/login",
+            json={"username": test_user["username"], "password": test_user["password"]}
+        )
+
+        if login_response.status_code != 200:
+            raise Exception(f"Login failed: {login_response.text}")
+
+        token = login_response.json().get("access_token")
+
+        # Set token in localStorage by navigating and executing script
+        page.goto(f"{api_url}/register")  # Just to establish the domain context
+        page.evaluate(f"localStorage.setItem('auth_token', '{token}')")
+
+        yield page
+        browser.close()
