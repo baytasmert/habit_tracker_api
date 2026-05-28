@@ -9,10 +9,15 @@ DATABASE_URL = os.getenv(
 
 engine = create_engine(
     DATABASE_URL,
-    pool_size=20,           # 5 → 20 connections
-    max_overflow=40,        # 10 → 40 overflow
-    pool_recycle=3600,      # recycle after 1 hour
+    pool_size=30,           # increased from 20
+    max_overflow=60,        # increased from 40
+    pool_recycle=1800,      # recycle after 30min (more aggressive)
     pool_pre_ping=True,     # check connection before use
+    connect_args={
+        "connect_timeout": 30,  # 30 sec connection timeout
+        "keepalives": 1,        # enable TCP keepalives
+        "keepalives_idle": 30,  # idle timeout
+    }
 )
 
 SessionLocal = sessionmaker(
