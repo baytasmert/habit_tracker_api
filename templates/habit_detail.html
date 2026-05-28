@@ -126,45 +126,50 @@ async function loadHabitDetail() {
             </div>
 
             <div id="trackForm" style="display: none;" class="track-form">
-                <h3>Log Today's Activity</h3>
+                <h3>🎯 Bugünün Takibini Ekle</h3>
+                <p style="color: #666; margin-bottom: 1.5rem;">Aşağıdaki alanları doldurarak bugünün ilerlemenizi kaydedin</p>
                 <form id="trackActivityForm">
                     <div class="form-group">
                         <label>
                             <input type="checkbox" name="done" id="done">
-                            <span id="doneLabel">Completed</span>
+                            <span id="doneLabel"><strong>Tamamladım mı?</strong></span>
                         </label>
+                        <small style="display: block; margin-top: 0.3rem;">Alışkanlığı bugün tamamladıysanız işaretle</small>
                     </div>
 
                     <div class="form-group">
-                        <label for="duration">Duration (minutes):</label>
-                        <input type="number" id="duration" name="duration" min="0">
+                        <label for="duration"><strong>Harcanan süre (dakika):</strong></label>
+                        <input type="number" id="duration" name="duration" min="0" placeholder="örn: 30">
+                        <small>Aktivite kaç dakika sürdü? (opsiyonel)</small>
                     </div>
 
                     <div class="form-group">
-                        <label>How are you feeling?</label>
+                        <label><strong>Şu an nasıl hissediyorsun?</strong></label>
                         <div class="mood-emoji-selector">
-                            <button type="button" class="mood-emoji" data-emoji="😢" title="Sad">😢</button>
-                            <button type="button" class="mood-emoji" data-emoji="😐" title="Neutral">😐</button>
-                            <button type="button" class="mood-emoji" data-emoji="😊" title="Happy">😊</button>
-                            <button type="button" class="mood-emoji" data-emoji="😄" title="Very Happy">😄</button>
-                            <button type="button" class="mood-emoji" data-emoji="😍" title="Excited">😍</button>
+                            <button type="button" class="mood-emoji" data-emoji="😢" title="Çok kötü">😢</button>
+                            <button type="button" class="mood-emoji" data-emoji="😐" title="Normal">😐</button>
+                            <button type="button" class="mood-emoji" data-emoji="😊" title="İyi">😊</button>
+                            <button type="button" class="mood-emoji" data-emoji="😄" title="Çok iyi">😄</button>
+                            <button type="button" class="mood-emoji" data-emoji="😍" title="Harika!">😍</button>
                         </div>
                         <input type="hidden" id="mood_emoji" name="mood_emoji">
+                        <small>Mood'unu seç - alışkanlığın ruh haline nasıl etki ettiğini takip et</small>
                     </div>
 
                     <div class="form-group">
-                        <label for="photoFile">Add a photo (optional):</label>
+                        <label for="photoFile"><strong>Fotoğraf ekle (opsiyonel):</strong></label>
                         <input type="file" id="photoFile" name="photoFile" accept="image/*">
-                        <small>Take a photo as proof or memory of your progress</small>
+                        <small>İlerlemenizin kanıtı olarak bir fotoğraf ekleyin</small>
                     </div>
 
                     <div class="form-group">
-                        <label for="notes">Notes (optional):</label>
-                        <textarea id="notes" name="notes" rows="2" placeholder="How did it go? Any notes?"></textarea>
+                        <label for="notes"><strong>Notlar (opsiyonel):</strong></label>
+                        <textarea id="notes" name="notes" rows="2" placeholder="Nasıl geçti? Herhangi bir not?"></textarea>
+                        <small>Deneyiminizi yazın, zorluklar veya başarılar</small>
                     </div>
 
-                    <button type="submit" class="btn btn-primary">Save</button>
-                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('trackForm').style.display='none'">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('trackForm').style.display='none'">İptal</button>
                 </form>
             </div>
         `;

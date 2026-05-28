@@ -19,14 +19,17 @@
         <div class="stat-card">
             <h3>Total Habits</h3>
             <p class="stat-number" id="totalHabits">0</p>
+            <small style="color: #666; margin-top: 0.5rem;">Alışkanlıkların</small>
         </div>
         <div class="stat-card">
-            <h3>This Week</h3>
-            <p class="stat-number" id="thisWeek">0</p>
+            <h3>Completed Today</h3>
+            <p class="stat-number" id="completedToday">0</p>
+            <small style="color: #666; margin-top: 0.5rem;">Bugün tamamlanan</small>
         </div>
         <div class="stat-card">
             <h3>Longest Streak</h3>
             <p class="stat-number" id="longestStreak">0</p>
+            <small style="color: #666; margin-top: 0.5rem;">Gün</small>
         </div>
     </div>
 
@@ -108,6 +111,16 @@ async function loadHabits() {
         // Update total habits count
         document.getElementById('totalHabits').textContent = habits.length;
 
+        // Count completed today
+        const today = new Date().toISOString().split('T')[0];
+        const completedCount = habits.reduce((count, habit) => {
+            if (habit.logs && habit.logs.some(log => log.log_date.split('T')[0] === today && log.done)) {
+                return count + 1;
+            }
+            return count;
+        }, 0);
+        document.getElementById('completedToday').textContent = completedCount;
+
         // Show recent habits (first 3)
         const recentHabits = habits.slice(0, 3);
         const habitsList = document.getElementById('recentHabitsList');
@@ -140,10 +153,10 @@ async function loadHabits() {
                         <div class="habit-card-badges">
                             <span class="habit-type-badge" style="background-color: ${typeColor}; color: white;">${habit.habit_type}</span>
                         </div>
-                        <p class="habit-card-last-tracked">Last tracked: ${lastTracked}</p>
+                        <p class="habit-card-last-tracked">Günlük takip: ${lastTracked}</p>
                         <div class="habit-card-actions">
-                            <a href="/edit-habit?id=${habit.id}" class="btn btn-small btn-primary">Track</a>
-                            <a href="/edit-habit?id=${habit.id}" class="btn btn-small btn-secondary">Edit</a>
+                            <a href="/habit-detail?id=${habit.id}" class="btn btn-small btn-primary">Takip Et</a>
+                            <a href="/edit-habit?id=${habit.id}" class="btn btn-small btn-secondary">Düzenle</a>
                         </div>
                     </div>
                 </div>
