@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, RedirectResponse, FileResponse, StreamingResponse
+from fastapi.responses import JSONResponse, RedirectResponse, FileResponse, StreamingResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from slowapi import Limiter
@@ -200,13 +200,19 @@ def index(request: Request):
 
 @app.get("/home", response_class=templates.TemplateResponse.__class__)
 async def home(request: Request):
-    """Authenticated home page with profile and stats (auth check in JavaScript)"""
+    """Authenticated home page with profile and stats"""
+    token = request.cookies.get("auth_token")
+    if not token:
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse("home.html", {"request": request})
 
 
 @app.get("/my-habits", response_class=templates.TemplateResponse.__class__)
 async def habits_page(request: Request):
-    """Habits management page (auth check in JavaScript)"""
+    """Habits management page"""
+    token = request.cookies.get("auth_token")
+    if not token:
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse("habits.html", {"request": request})
 
 
@@ -454,7 +460,7 @@ def update_habit(
     return habit
 
 
-@app.post("/login", response_model=LoginResponse)
+@app.post("/login")
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
     logger.info(f"Login attempt for user: {payload.username}")
     user = db.query(User).filter(User.username == payload.username).first()
@@ -465,7 +471,17 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
     token = create_access_token(user_id=user.id)
     logger.info(f"Successful login for user: {payload.username}")
-    return {"access_token": token}
+
+    response = JSONResponse({"access_token": token})
+    response.set_cookie(
+        key="auth_token",
+        value=token,
+        httponly=True,
+        secure=False,  # Set to True in production with HTTPS
+        samesite="lax",
+        max_age=86400 * 30  # 30 days
+    )
+    return response
 
 
 @app.post("/register", response_model=UserResponse, status_code=201)
