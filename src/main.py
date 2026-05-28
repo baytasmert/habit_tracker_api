@@ -334,7 +334,7 @@ async def login_page(request: Request):
 
 @app.get("/avatars/{user_id}")
 async def get_avatar(user_id: int, db: Session = Depends(get_db)):
-    """Redirect to avatar from S3 or return default"""
+    """Serve avatar from S3 - download on server, stream to browser"""
     user = db.query(User).filter(User.id == user_id).first()
 
     if not user or not user.avatar_url:
@@ -342,7 +342,24 @@ async def get_avatar(user_id: int, db: Session = Depends(get_db)):
         default_avatar_path = os.path.join(static_dir, 'default-avatar.svg')
         return FileResponse(default_avatar_path, media_type="image/svg+xml")
 
-    return RedirectResponse(url=user.avatar_url, status_code=302)
+    try:
+        s3 = S3Service()
+        file_key = f"avatars/user-{user_id}.jpg"
+        file_data = s3.download_file(file_key)
+
+        if file_data:
+            return StreamingResponse(
+                iter([file_data]),
+                media_type="image/jpeg",
+                headers={"Cache-Control": "public, max-age=3600"}
+            )
+    except Exception as e:
+        logger.error(f"Avatar download error: {e}")
+
+    # Fallback to default
+    static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
+    default_avatar_path = os.path.join(static_dir, 'default-avatar.svg')
+    return FileResponse(default_avatar_path, media_type="image/svg+xml")
 
 
 @app.get("/create-habit", response_class=templates.TemplateResponse.__class__)
