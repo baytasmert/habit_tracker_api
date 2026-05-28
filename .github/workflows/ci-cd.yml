@@ -85,7 +85,10 @@ jobs:
       
       - name: Install dependencies
         run: pip install -r requirements.txt
-      
+
+      - name: Install Playwright browsers
+        run: playwright install chromium
+
       - name: Run tests with coverage
         run: pytest tests/ -v --cov=src --cov-fail-under=70 --cov-report=xml
         env:
