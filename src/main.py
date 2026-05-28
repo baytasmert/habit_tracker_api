@@ -260,18 +260,27 @@ async def get_avatar(user_id: int, db: Session = Depends(get_db)):
 @app.get("/create-habit", response_class=templates.TemplateResponse.__class__)
 async def create_habit_page(request: Request):
     """Create habit page (requires auth)"""
+    token = request.cookies.get("auth_token")
+    if not token:
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse("create_habit.html", {"request": request})
 
 
 @app.get("/habits/{habit_id}/detail", response_class=templates.TemplateResponse.__class__)
 async def habit_detail_page(request: Request, habit_id: int):
     """Habit detail page (requires auth)"""
+    token = request.cookies.get("auth_token")
+    if not token:
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse("habit_detail.html", {"request": request, "habit_id": habit_id})
 
 
 @app.get("/edit-habit", response_class=templates.TemplateResponse.__class__)
 async def edit_habit_page(request: Request):
     """Edit habit page (requires auth) - redirects to detail page"""
+    token = request.cookies.get("auth_token")
+    if not token:
+        return RedirectResponse(url="/login", status_code=302)
     habit_id = request.query_params.get("id")
     return templates.TemplateResponse("habit_detail.html", {"request": request, "habit_id": habit_id})
 
@@ -293,11 +302,14 @@ async def admin_panel(request: Request, current_user: User = Depends(get_current
 
 
 @app.get("/profile", response_class=templates.TemplateResponse.__class__)
-async def profile_page(request: Request, current_user: User = Depends(get_current_user)):
+async def profile_page(request: Request):
     """User profile page - view and change avatar"""
+    token = request.cookies.get("auth_token")
+    if not token:
+        return RedirectResponse(url="/login", status_code=302)
+
     return templates.TemplateResponse("profile.html", {
-        "request": request,
-        "user": current_user
+        "request": request
     })
 
 
