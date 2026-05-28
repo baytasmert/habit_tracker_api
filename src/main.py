@@ -238,6 +238,12 @@ async def logout_page():
     return RedirectResponse(url="/login")
 
 
+@app.get("/admin", response_class=templates.TemplateResponse.__class__)
+async def admin_panel(request: Request):
+    """Admin panel with system health status"""
+    return templates.TemplateResponse("admin.html", {"request": request})
+
+
 def compute_streak(history: dict) -> tuple[int, Optional[date]]:
     done_dates = sorted([d for d, done in history.items() if done])
     if not done_dates:
@@ -473,6 +479,17 @@ def create_user(
     }
 
 
+@app.get("/me", response_model=dict)
+def get_current_user_info(current_user: User = Depends(get_current_user)):
+    """Get current user's information"""
+    return {
+        "id": current_user.id,
+        "username": current_user.username,
+        "email": current_user.email,
+        "avatar_url": current_user.avatar_url
+    }
+
+
 @app.post("/users/{user_id}/avatar")
 async def upload_avatar(
     user_id: int,
@@ -517,3 +534,52 @@ def download_avatar(user_id: int, db: Session = Depends(get_db)):
 
     from fastapi.responses import StreamingResponse
     return StreamingResponse(iter([file_data]), media_type="image/jpeg")
+
+
+@app.post("/users/avatar")
+async def upload_user_avatar(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    file_content = await file.read()
+
+    s3 = S3Service()
+    file_key = f"avatars/user-{current_user.id}.jpg"
+    url = s3.upload_file(file_key, file_content)
+
+    if not url:
+        raise HTTPException(status_code=500, detail="Upload failed")
+
+    current_user.avatar_url = url
+    db.commit()
+    db.refresh(current_user)
+
+    return {"avatar_url": url, "user_id": current_user.id}
+
+
+@app.delete("/users/avatar")
+def delete_user_avatar(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not current_user.avatar_url:
+        raise HTTPException(status_code=404, detail="Avatar not found")
+
+    s3 = S3Service()
+    file_key = f"avatars/user-{current_user.id}.jpg"
+    s3.delete_file(file_key)
+
+    current_user.avatar_url = None
+    db.commit()
+    db.refresh(current_user)
+
+    return {"message": "Avatar deleted"}
+
+
+@app.get("/users/avatar")
+def get_user_avatar(current_user: User = Depends(get_current_user)):
+    if not current_user.avatar_url:
+        raise HTTPException(status_code=404, detail="Avatar not found")
+
+    return {"avatar_url": current_user.avatar_url}

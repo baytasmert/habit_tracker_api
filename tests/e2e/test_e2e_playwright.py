@@ -105,11 +105,13 @@ class TestHabitTrackingE2E:
         # Navigate to habit detail page (click first View link, should be the one we just created)
         page.click("a:has-text('View')")
         # Wait for page to load - the detail page loads habits asynchronously
-        page.wait_for_selector("h1", timeout=10000)
-        page.wait_for_selector("button:has-text('Track')", timeout=5000)
+        page.wait_for_load_state("networkidle", timeout=10000)
 
-        # Click track button to open tracking form
-        page.click("button:has-text('Track')")
+        # Track button should now be visible and clickable
+        track_button = page.locator("button:has-text('Track')").first
+        track_button.scroll_into_view_if_needed()
+        track_button.click()
+
         # Wait for track form to be visible (it starts with display:none)
         page.locator("#trackForm").wait_for(state="visible", timeout=5000)
 
@@ -119,7 +121,8 @@ class TestHabitTrackingE2E:
         page.select_option("select[name=mood]", "5")
 
         # Submit tracking form
-        page.click("button:has-text('Save')")
+        save_button = page.locator("#trackForm button:has-text('Save')").first
+        save_button.click()
 
         # Verify streak counter appears
         expect(page.locator("text=Streak")).to_be_visible(timeout=5000)
@@ -153,24 +156,32 @@ class TestHabitEditE2E:
         # Navigate to habit detail and click edit (click first View link)
         page.click("a:has-text('View')")
         # Wait for page to load - the detail page loads habits asynchronously
-        page.wait_for_selector("h1", timeout=10000)
-        page.wait_for_selector("button:has-text('Edit')", timeout=5000)
-        page.click("button:has-text('Edit')")
+        page.wait_for_load_state("networkidle", timeout=10000)
+
+        # Edit button should now be visible and clickable
+        edit_button = page.locator("button:has-text('Edit')").first
+        edit_button.scroll_into_view_if_needed()
+        edit_button.click()
 
         # Fill edit form with new values
         # Wait for edit form to be visible (it starts with display:none)
         page.locator("#editForm").wait_for(state="visible", timeout=5000)
 
         new_name = f"Updated {int(time.time())}"
-        page.evaluate("() => document.querySelector('input[name=name]').value = ''")
-        page.fill("input[name=name]", new_name)
-        page.select_option("select[name=goal_days_per_week]", "5")
+        # Clear the name field
+        name_input = page.locator("#editForm input[name=name]")
+        name_input.scroll_into_view_if_needed()
+        name_input.clear()
+        name_input.fill(new_name)
+        page.select_option("#editForm select[name=goal_days_per_week]", "5")
 
         # Submit edit form - using locator to find the visible save button in edit form
-        page.locator("#editForm button:has-text('Save')").click()
+        save_button = page.locator("#editForm button:has-text('Save')").first
+        save_button.click()
 
         # Verify new name appears on page
-        expect(page.locator(f"h1:has-text('{new_name}'")).to_be_visible(timeout=5000)
+        page.wait_for_load_state("networkidle", timeout=5000)
+        expect(page.locator("h1")).to_have_text(new_name, timeout=5000)
 
 
 class TestErrorHandlingE2E:

@@ -57,3 +57,16 @@ class S3Service:
         except Exception as e:
             print(f"❌ Download error: {e}")
             return None
+
+    def delete_file(self, file_key: str) -> bool:
+        """Dosya sil"""
+        try:
+            self.s3.delete_object(
+                Bucket=self.bucket_name,
+                Key=file_key
+            )
+            print(f"✅ File deleted: {file_key}")
+            return True
+        except Exception as e:
+            print(f"❌ Delete error: {e}")
+            return False

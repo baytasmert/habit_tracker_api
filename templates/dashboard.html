@@ -5,11 +5,37 @@
 {% block content %}
 <div class="dashboard-container">
     <div class="dashboard-header">
-        <h1>My Habits</h1>
-        <a href="/create-habit" class="btn btn-primary">Create Habit</a>
+        <div class="header-left">
+            <h1>My Habits</h1>
+        </div>
+        <div class="header-right">
+            <a href="/create-habit" class="btn btn-primary">Create Habit</a>
+            <a href="/admin" class="btn btn-secondary">Admin Panel</a>
+        </div>
+    </div>
+
+    <div class="profile-section">
+        <h2>My Profile</h2>
+        <div class="profile-card">
+            <div class="avatar-container">
+                <img id="avatarImage" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%234a90e2'/%3E%3Ctext x='50' y='50' font-size='50' fill='white' text-anchor='middle' dy='.3em'%3E👤%3C/text%3E%3C/svg%3E" alt="Avatar" class="avatar">
+                <div class="avatar-actions">
+                    <label class="btn btn-small btn-primary">
+                        Upload Photo
+                        <input type="file" id="avatarUpload" accept="image/*" style="display:none;">
+                    </label>
+                    <button id="deleteAvatarBtn" class="btn btn-small btn-danger">Delete Photo</button>
+                </div>
+            </div>
+            <div class="profile-info">
+                <p><strong>Username:</strong> <span id="profileUsername">Loading...</span></p>
+                <p><strong>Email:</strong> <span id="profileEmail">Loading...</span></p>
+            </div>
+        </div>
     </div>
 
     <div id="habitsList" class="habits-list">
+        <h2>Habits</h2>
         <p class="loading">Loading habits...</p>
     </div>
 </div>
@@ -17,8 +43,42 @@
 
 {% block scripts %}
 <script>
+const token = localStorage.getItem('auth_token');
+
+async function loadProfile() {
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
+    try {
+        const response = await fetch('/me', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (response.ok) {
+            const user = await response.json();
+            document.getElementById('profileUsername').textContent = user.username || 'User';
+            document.getElementById('profileEmail').textContent = user.email || 'No email';
+
+            if (user.avatar_url) {
+                document.getElementById('avatarImage').src = user.avatar_url;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading profile:', error);
+    }
+}
+
 async function loadHabits() {
-    const token = localStorage.getItem('auth_token');
     if (!token) {
         window.location.href = '/login';
         return;
@@ -45,11 +105,11 @@ async function loadHabits() {
         const habitsList = document.getElementById('habitsList');
 
         if (habits.length === 0) {
-            habitsList.innerHTML = '<p class="empty-state">No habits yet. <a href="/create-habit">Create one!</a></p>';
+            habitsList.innerHTML = '<h2>Habits</h2><p class="empty-state">No habits yet. <a href="/create-habit">Create one!</a></p>';
             return;
         }
 
-        habitsList.innerHTML = habits.map(habit => `
+        habitsList.innerHTML = '<h2>Habits</h2>' + habits.map(habit => `
             <div class="habit-card">
                 <h3>${habit.name || 'Untitled'}</h3>
                 <p>${habit.description || ''}</p>
@@ -70,7 +130,6 @@ async function deleteHabit(habitId) {
         return;
     }
 
-    const token = localStorage.getItem('auth_token');
     try {
         const response = await fetch(`/habits/${habitId}`, {
             method: 'DELETE',
@@ -89,7 +148,59 @@ async function deleteHabit(habitId) {
     }
 }
 
-// Load habits on page load
+document.getElementById('avatarUpload').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/users/avatar', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.avatar_url) {
+                document.getElementById('avatarImage').src = data.avatar_url + '?t=' + new Date().getTime();
+            }
+            alert('Avatar uploaded successfully!');
+        } else {
+            alert('Failed to upload avatar');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+});
+
+document.getElementById('deleteAvatarBtn').addEventListener('click', async () => {
+    if (!confirm('Delete your avatar?')) return;
+
+    try {
+        const response = await fetch('/users/avatar', {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            document.getElementById('avatarImage').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%234a90e2'/%3E%3Ctext x='50' y='50' font-size='50' fill='white' text-anchor='middle' dy='.3em'%3E👤%3C/text%3E%3C/svg%3E";
+            alert('Avatar deleted!');
+        } else {
+            alert('Failed to delete avatar');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+});
+
+loadProfile();
 loadHabits();
 </script>
 {% endblock %}

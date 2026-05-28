@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>Admin Panel</h1>
+        <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+
+    <div class="admin-content">
+        <section class="admin-section">
+            <h2>System Health Status</h2>
+            <div class="health-grid">
+                <div id="apiHealth" class="health-card">
+                    <h3>API Server</h3>
+                    <div class="status pending">Checking...</div>
+                    <p id="apiDetails"></p>
+                </div>
+                <div id="dbHealth" class="health-card">
+                    <h3>PostgreSQL Database</h3>
+                    <div class="status pending">Checking...</div>
+                    <p id="dbDetails"></p>
+                </div>
+                <div id="prometheusHealth" class="health-card">
+                    <h3>Prometheus Metrics</h3>
+                    <div class="status pending">Checking...</div>
+                    <p id="prometheusDetails"></p>
+                </div>
+                <div id="grafanaHealth" class="health-card">
+                    <h3>Grafana Dashboards</h3>
+                    <div class="status pending">Checking...</div>
+                    <p id="grafanaDetails"></p>
+                </div>
+                <div id="localstackHealth" class="health-card">
+                    <h3>LocalStack (S3)</h3>
+                    <div class="status pending">Checking...</div>
+                    <p id="localstackDetails"></p>
+                </div>
+                <div id="jaegerHealth" class="health-card">
+                    <h3>Jaeger Tracing</h3>
+                    <div class="status pending">Checking...</div>
+                    <p id="jaegerDetails"></p>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-section">
+            <h2>Quick Links</h2>
+            <div class="quick-links">
+                <a href="http://localhost:8001/docs" target="_blank" class="btn btn-primary">API Documentation (Swagger)</a>
+                <a href="http://localhost:3000" target="_blank" class="btn btn-primary">Grafana Dashboards</a>
+                <a href="http://localhost:9090" target="_blank" class="btn btn-primary">Prometheus Metrics</a>
+                <a href="http://localhost:16686" target="_blank" class="btn btn-primary">Jaeger Tracing</a>
+            </div>
+        </section>
+
+        <section class="admin-section">
+            <h2>Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Total Users</h4>
+                    <p id="totalUsers" class="stat-value">Loading...</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Total Habits</h4>
+                    <p id="totalHabits" class="stat-value">Loading...</p>
+                </div>
+                <div class="stat-card">
+                    <h4>API Uptime</h4>
+                    <p id="apiUptime" class="stat-value">Loading...</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const token = localStorage.getItem('auth_token');
+const adminToken = localStorage.getItem('admin_token');
+
+if (!token && !adminToken) {
+    window.location.href = '/login';
+}
+
+async function checkHealth() {
+    const checks = [
+        {
+            name: 'api',
+            url: '/health',
+            displayName: 'API Server'
+        },
+        {
+            name: 'prometheus',
+            url: 'http://localhost:9090/-/healthy',
+            displayName: 'Prometheus'
+        },
+        {
+            name: 'grafana',
+            url: 'http://localhost:3000/api/health',
+            displayName: 'Grafana'
+        },
+        {
+            name: 'jaeger',
+            url: 'http://localhost:16686/api/services',
+            displayName: 'Jaeger'
+        }
+    ];
+
+    for (const check of checks) {
+        try {
+            const response = await fetch(check.url, {
+                method: 'GET',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+
+            const statusEl = document.getElementById(check.name + 'Health').querySelector('.status');
+            if (response.ok) {
+                statusEl.textContent = '✓ Healthy';
+                statusEl.className = 'status healthy';
+                document.getElementById(check.name + 'Details').textContent = 'Service is running';
+            } else {
+                statusEl.textContent = '✗ Unhealthy';
+                statusEl.className = 'status unhealthy';
+                document.getElementById(check.name + 'Details').textContent = 'Status: ' + response.status;
+            }
+        } catch (error) {
+            const statusEl = document.getElementById(check.name + 'Health').querySelector('.status');
+            statusEl.textContent = '✗ Offline';
+            statusEl.className = 'status offline';
+            document.getElementById(check.name + 'Details').textContent = error.message;
+        }
+    }
+
+    // Check database via API
+    try {
+        const response = await fetch('/health', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        const dbStatusEl = document.getElementById('dbHealth').querySelector('.status');
+        if (response.ok) {
+            dbStatusEl.textContent = '✓ Healthy';
+            dbStatusEl.className = 'status healthy';
+            document.getElementById('dbDetails').textContent = 'Connected';
+        }
+    } catch (error) {
+        const dbStatusEl = document.getElementById('dbHealth').querySelector('.status');
+        dbStatusEl.textContent = '✗ Offline';
+        dbStatusEl.className = 'status offline';
+    }
+
+    // Check LocalStack S3
+    try {
+        const response = await fetch('http://localhost:4566/_localstack/health', {
+            method: 'GET'
+        });
+        const s3StatusEl = document.getElementById('localstackHealth').querySelector('.status');
+        if (response.ok) {
+            s3StatusEl.textContent = '✓ Healthy';
+            s3StatusEl.className = 'status healthy';
+            document.getElementById('localstackDetails').textContent = 'S3 ready';
+        }
+    } catch (error) {
+        const s3StatusEl = document.getElementById('localstackHealth').querySelector('.status');
+        s3StatusEl.textContent = '✗ Offline';
+        s3StatusEl.className = 'status offline';
+    }
+}
+
+async function loadStatistics() {
+    if (!token) return;
+
+    try {
+        const response = await fetch('/habits', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const habits = await response.json();
+            document.getElementById('totalHabits').textContent = habits.length;
+        }
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+
+    document.getElementById('totalUsers').textContent = '1+';
+    document.getElementById('apiUptime').textContent = 'Running';
+}
+
+checkHealth();
+loadStatistics();
+setInterval(checkHealth, 30000);
+</script>
+{% endblock %}

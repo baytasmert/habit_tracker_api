@@ -13,8 +13,24 @@
             </div>
 
             <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div class="form-group">
                 <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
+                <input type="password" id="password" name="password" required autocomplete="new-password">
+            </div>
+
+            <div class="form-group">
+                <label for="password-confirm">Confirm Password:</label>
+                <input type="password" id="password-confirm" name="password-confirm" required autocomplete="new-password">
+            </div>
+
+            <div class="form-group">
+                <label for="avatar">Profile Photo (Optional):</label>
+                <input type="file" id="avatar" name="avatar" accept="image/*">
+                <small>Upload a profile photo (optional)</small>
             </div>
 
             <button type="submit" class="btn btn-primary">Register</button>
@@ -33,7 +49,20 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     e.preventDefault();
 
     const username = document.getElementById('username').value;
+    const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const passwordConfirm = document.getElementById('password-confirm').value;
+    const avatarFile = document.getElementById('avatar').files[0];
+
+    if (password !== passwordConfirm) {
+        alert('Passwords do not match!');
+        return;
+    }
+
+    if (password.length < 6) {
+        alert('Password must be at least 6 characters long!');
+        return;
+    }
 
     try {
         const response = await fetch('/register', {
@@ -44,13 +73,49 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
             body: JSON.stringify({ username, password })
         });
 
-        if (response.ok) {
-            alert('Registration successful! Redirecting to login...');
-            window.location.href = '/login';
-        } else {
+        if (!response.ok) {
             const data = await response.json();
             alert('Error: ' + (data.detail || 'Registration failed'));
+            return;
         }
+
+        const userData = await response.json();
+
+        // Upload avatar if provided
+        if (avatarFile) {
+            try {
+                // Login first to get token
+                const loginResponse = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (loginResponse.ok) {
+                    const loginData = await loginResponse.json();
+                    const token = loginData.access_token;
+
+                    // Upload avatar
+                    const formData = new FormData();
+                    formData.append('file', avatarFile);
+
+                    await fetch('/users/avatar', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+                }
+            } catch (error) {
+                console.error('Avatar upload failed:', error);
+            }
+        }
+
+        alert('Registration successful! Redirecting to login...');
+        window.location.href = '/login';
     } catch (error) {
         alert('Error: ' + error.message);
     }
