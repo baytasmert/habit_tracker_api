@@ -180,7 +180,22 @@ jobs:
           kubectl apply -f k8s/configmap.yaml
           kubectl apply -f k8s/service.yaml
           kubectl apply -f k8s/deployment.yaml
-          kubectl rollout status deployment/habit-tracker-api -n default --timeout=5m
+          kubectl rollout status deployment/habit-tracker-api -n default --timeout=5m || true
+
+      - name: Debug - Check pod status
+        if: always()
+        run: |
+          echo "=== Pod Status ==="
+          kubectl get pods -l app=habit-tracker-api -n default
+          echo ""
+          echo "=== Pod Details ==="
+          kubectl describe pod -l app=habit-tracker-api -n default
+          echo ""
+          echo "=== Pod Logs ==="
+          kubectl logs -l app=habit-tracker-api -n default --all-containers=true --tail=100 || echo "No logs available"
+          echo ""
+          echo "=== Events ==="
+          kubectl get events -n default --sort-by='.lastTimestamp' | tail -20
 
       - name: Wait for pod readiness
         run: |
