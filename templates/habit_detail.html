@@ -10,12 +10,16 @@
         <p class="loading">Loading habit...</p>
     </div>
 </div>
+<!-- habitId: {{ habit_id }} -->
 {% endblock %}
 
 {% block scripts %}
 <script>
 const token = localStorage.getItem('auth_token');
-const habitId = {{ habit_id }};
+
+// Extract habit ID from URL: /habits/{id}/detail
+const habitIdMatch = window.location.pathname.match(/\/habits\/(\d+)\/detail/);
+const habitId = habitIdMatch ? parseInt(habitIdMatch[1]) : null;
 
 async function loadHabitDetail() {
     if (!token) {
@@ -37,16 +41,24 @@ async function loadHabitDetail() {
             }
         });
 
+        console.log(`[FETCH] /habits/${habitId} status:`, habitResponse.status);
+
         if (habitResponse.status === 401) {
+            console.log('[AUTH] Redirecting to login - 401');
             window.location.href = '/login';
             return;
         }
 
         if (!habitResponse.ok) {
-            throw new Error('Habit not found');
+            const errorText = await habitResponse.text();
+            const errorMsg = `Habit fetch failed: ${habitResponse.status} ${habitResponse.statusText} - ${errorText.substring(0, 200)}`;
+            console.error('[ERROR]', errorMsg);
+            document.getElementById('habitDetail').innerHTML = `<p class="error">${errorMsg}</p>`;
+            throw new Error(errorMsg);
         }
 
         const habit = await habitResponse.json();
+        console.log('[SUCCESS] Habit loaded:', habit);
 
         // Load streak
         const streakResponse = await fetch(`/habits/${habitId}/streak`, {
@@ -212,10 +224,10 @@ async function loadHabitDetail() {
 
         // Load and display logs history
         loadAndDisplayLogs(habit.logs || []);
-        console.log('[DEBUG] Habit detail page loaded successfully');
+        console.log('[SUCCESS] Habit detail page fully loaded');
 
     } catch (error) {
-        console.error('[ERROR] Exception in loadHabitDetail:', error);
+        console.error('[CATCH] Exception:', error.message, error);
         document.getElementById('habitDetail').innerHTML = `<p class="error">Error: ${error.message}</p>`;
     }
 }

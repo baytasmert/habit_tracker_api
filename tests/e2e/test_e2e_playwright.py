@@ -84,7 +84,6 @@ class TestHabitCreationE2E:
 class TestHabitTrackingE2E:
     """Scenario 3: E2E habit tracking and streak display"""
 
-    @pytest.mark.xfail(reason="Habit detail page buttons not rendering - async fetch issue. Track button should appear after API call but page stays in loading state")
     def test_track_habit_and_view_streak(self, page: Page, api_url, test_user):
         """
         E2E Test: User tracks a habit and verifies streak counter updates
@@ -95,6 +94,10 @@ class TestHabitTrackingE2E:
         - Mark as done and submit
         - Verify streak counter shows activity
         """
+        # Capture console messages
+        console_logs = []
+        page.on("console", lambda msg: console_logs.append(f"[{msg.type}] {msg.text}"))
+
         # Setup authenticated session
         setup_authenticated_page(page, api_url, test_user)
 
@@ -120,7 +123,24 @@ class TestHabitTrackingE2E:
         # Wait for page to load - the detail page loads habits asynchronously
         page.wait_for_url("**/habits/**/detail**", timeout=10000)
         page.wait_for_load_state("networkidle", timeout=10000)
-        page.wait_for_selector("button:has-text('Track')", timeout=10000)
+
+        try:
+            page.wait_for_selector("button:has-text('Track')", timeout=5000)
+        except Exception as e:
+            print(f"\n=== CONSOLE LOGS ===")
+            for log in console_logs:
+                print(log)
+            content = page.content()
+            # Check for error messages
+            if "Error" in content or "error" in content:
+                import re
+                errors = re.findall(r'<p class="error">([^<]+)</p>', content)
+                print(f"\n=== PAGE ERRORS ===")
+                for error in errors:
+                    print(error)
+            print(f"\n=== PAGE CONTENT (first 500 chars) ===")
+            print(content[:500])
+            raise
 
         # Track button should now be visible and clickable
         track_button = page.locator("button:has-text('Track')").first
