@@ -705,6 +705,7 @@ async def upload_habit_image(
 
 
 @app.post("/login")
+@app.post("/login")
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
     logger.info(f"Login attempt for user: {payload.username}")
     user = db.query(User).filter(User.username == payload.username).first()
@@ -716,7 +717,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     token = create_access_token(user_id=user.id)
     logger.info(f"Successful login for user: {payload.username}")
 
-    response = JSONResponse({"access_token": token})
+    response = JSONResponse({"access_token": token, "token_type": "bearer"})
     response.set_cookie(
         key="auth_token",
         value=token,
@@ -748,6 +749,8 @@ def register(payload: LoginRequest, db: Session = Depends(get_db)):
 
         logger.info(f"User registered successfully: {payload.username}")
         return new_user
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Registration error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Registration error: {str(e)}")
