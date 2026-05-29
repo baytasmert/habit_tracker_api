@@ -177,10 +177,12 @@ jobs:
         run: |
           kubectl apply -f k8s/postgres.yaml
           kubectl rollout status deployment/postgres -n default --timeout=2m
+          kubectl apply -f k8s/jaeger.yaml
+          kubectl apply -f k8s/localstack.yaml
           kubectl apply -f k8s/configmap.yaml
           kubectl apply -f k8s/service.yaml
           kubectl apply -f k8s/deployment.yaml
-          kubectl rollout status deployment/habit-tracker-api -n default --timeout=5m || true
+          kubectl rollout status deployment/habit-tracker-api -n default --timeout=5m
 
       - name: Debug - Check pod status
         if: always()
