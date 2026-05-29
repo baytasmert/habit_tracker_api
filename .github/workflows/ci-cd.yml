@@ -330,6 +330,11 @@ jobs:
             -e DB_USER=user \
             -e DB_PASSWORD=password \
             -e DB_NAME=habits \
+            -e AWS_ENDPOINT_URL=http://localhost:4566 \
+            -e AWS_REGION=us-east-1 \
+            -e AWS_ACCESS_KEY_ID=test \
+            -e AWS_SECRET_ACCESS_KEY=test \
+            -e JAEGER_HOST=localhost \
             -e OTEL_TRACES_EXPORTER=none \
             habit-tracker-api:latest
 
@@ -404,6 +409,11 @@ jobs:
             -e DB_USER=user \
             -e DB_PASSWORD=password \
             -e DB_NAME=habits \
+            -e AWS_ENDPOINT_URL=http://localhost:4566 \
+            -e AWS_REGION=us-east-1 \
+            -e AWS_ACCESS_KEY_ID=test \
+            -e AWS_SECRET_ACCESS_KEY=test \
+            -e JAEGER_HOST=localhost \
             -e OTEL_TRACES_EXPORTER=none \
             habit-tracker-api:latest
 
