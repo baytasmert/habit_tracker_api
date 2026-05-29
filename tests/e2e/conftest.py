@@ -12,7 +12,7 @@ def get_api_url():
         return api_url
     # Try localhost:8000 first (inside Docker), fall back to 8001 (host)
     try:
-        requests.get("http://localhost:8000/health", timeout=1)
+        requests.get("http://localhost:8000/health", timeout=5)
         return "http://localhost:8000"
     except (requests.RequestException, Exception):
         return "http://localhost:8001"
