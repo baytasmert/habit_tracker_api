@@ -92,21 +92,20 @@ def auth_client(client, db):
 
 @pytest.fixture
 def api_url():
-    """Return API base URL for E2E tests
+    """Return API base URL for unit/integration tests
 
-    Inside Docker: localhost:8000 (API runs on 8000 inside container)
-    On host (local): localhost:8001 (docker-compose maps 8001->8000)
+    Architecture:
+    - API (port 8000): REST endpoints, backend logic
+    - Frontend (port 8001): UI templates served by NGINX
+
+    Unit/integration tests call API directly (not UI)
     """
     api_url = os.getenv("API_URL")
     if api_url:
         return api_url
 
-    # Auto-detect: try localhost:8000 first (inside Docker), fall back to 8001 (host)
-    try:
-        requests.get("http://localhost:8000/health", timeout=1)
-        return "http://localhost:8000"
-    except (requests.RequestException, Exception):
-        return "http://localhost:8001"
+    # Tests use API port 8000 directly
+    return "http://localhost:8000"
 
 @pytest.fixture
 def test_user():
